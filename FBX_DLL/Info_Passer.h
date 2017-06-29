@@ -13,4 +13,5 @@ public:
 
 	// Load the model
 	void Load_FBX();
+	Skeleton* getSkeleton();
 };

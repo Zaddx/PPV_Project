@@ -989,4 +989,9 @@ namespace FBXLibrary
 
 		return FbxAMatrix(lT, lR, lS);
 	}
+
+	Skeleton* FBX_Functions::getSkeleton()
+	{
+		return &gSkeleton;
+	}
 }

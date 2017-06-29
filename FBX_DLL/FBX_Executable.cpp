@@ -12,3 +12,8 @@ void FBX_EXECUTABLE::Notify_DLL()
 {
 	info_passer.Load_FBX();
 }
+
+Skeleton* FBX_EXECUTABLE::getSkeleton()
+{
+	return info_passer.getSkeleton();
+}

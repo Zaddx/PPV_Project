@@ -7,6 +7,9 @@ using namespace FBXLibrary;
 
 class FBX_Load
 {
+private:
+	FBX_Functions fbx_func;
 public:
 	void LoadFBXFile(char** lFilename);
+	Skeleton* getSkeleton();
 };

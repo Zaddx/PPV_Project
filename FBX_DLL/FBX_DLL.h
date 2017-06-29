@@ -7,6 +7,7 @@ namespace FBXLibrary
 	// This class is exported from the FBX_DLL.dll
 	class FBX_Functions
 	{
+	private:
 		Skeleton gSkeleton;
 	public:
 		FBX_Functions(void);
@@ -43,7 +44,10 @@ namespace FBXLibrary
 		void ProcessSkeletonHierarchy(FbxNode* pRootNode);
 		void ProcessSkeletonHierarchyRecursively(FbxNode* pInNode, int pInDepth, int pMyIndex, int pInParentIndex);
 	
-		// Personal functions to get the matrices of nodes
+		// Personal function to get the matrices of nodes
 		FbxAMatrix GetGeometryTransformation(FbxNode* pInNode);
+
+		// Personal function to get the Skeleton
+		Skeleton* getSkeleton();
 	};
 }

@@ -241,6 +241,9 @@ bool Init_and_Inter::InitScene(User_Input &_input)
 	char** filename = &fileName;
 	fbx_Exec.Load_FBX(filename);
 
+	Skeleton* mageSkeleton;
+	mageSkeleton = fbx_Exec.getSkeleton();
+
 #pragma endregion
 
 	return true;

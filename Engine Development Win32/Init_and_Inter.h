@@ -12,6 +12,7 @@
 
 // My library's
 #include "../FBX_DLL/FBX_Executable.h"
+#include "../FBX_DLL/FBX_Helper_Structures.h"
 
 // Other Library's
 #pragma comment(lib, "D3D11.lib")

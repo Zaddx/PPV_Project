@@ -22,4 +22,5 @@ private:
 public:
 	void Load_FBX(char** lFilename);
 	void Notify_DLL();
+	Skeleton* getSkeleton();
 };
