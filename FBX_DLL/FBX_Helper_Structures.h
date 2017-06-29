@@ -12,6 +12,7 @@ struct Joint
 	DirectX::XMFLOAT4 pPosition;	// | pX | pY | pZ | pW | position of the joint in 4x4
 
 	int pParentIndex;
+	std::string pName;
 };
 
 // Dont really need bone structure since 
@@ -25,5 +26,5 @@ struct Skeleton
 {
 	std::vector<Joint> pJoints;
 	std::vector<Bone> pBones;	// Optional
-	std::string name;
+	std::string pName;
 };

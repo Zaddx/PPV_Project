@@ -28,9 +28,9 @@ namespace FBXLibrary
 		char* filepath = *lFilename;
 		for (int i = 0; i < pathSize; i++)
 		{
-			if (FbxString(filepath[i]) == "-test") 
+			if (FbxString(filepath[i]) == "-test")
 				gVerbose = false;
-			else /*if (lFilePath.IsEmpty())*/ 
+			else /*if (lFilePath.IsEmpty())*/
 				lFilePath += filepath[i];
 		}
 		if (lFilePath.IsEmpty())
@@ -287,16 +287,61 @@ namespace FBXLibrary
 			lName = lPose->GetName();
 			DisplayString("Pose Name: ", lName.Buffer());
 
+			// Fill out the skeleton name
+			gSkeleton.pName = lName;
+
 			DisplayBool("    Is a bind pose: ", lPose->IsBindPose());
 
 			DisplayInt("    Number of items in the pose: ", lPose->GetCount());
 
 			DisplayString("", "");
 
-			for (j = 0; j<lPose->GetCount(); j++)
+			for (j = 0; j < lPose->GetCount(); j++)
 			{
 				lName = lPose->GetNodeName(j).GetCurrentName();
 				DisplayString("    Item name: ", lName.Buffer());
+
+				// Get the node and skeleton
+				FbxNode *lNode = lPose->GetNode(j);
+				FbxSkeleton *lSkeleton = lNode->GetSkeleton();
+
+				// Check to see if the skeleton eixsts
+				// If it does then check to see if it's the root
+				if (lSkeleton)
+				{
+					// Show if it's skeleton is root or not
+					DisplayBool("    Is skeleton root: ", lSkeleton->IsSkeletonRoot());
+
+					// Process the hierarchy
+					if (lSkeleton->IsSkeletonRoot())
+						ProcessSkeletonHierarchy(lNode);
+
+					// Check to see if the Joint matches the current node
+					// If so fill in the matrices of the joint
+					std::string watchName = lNode->GetName();
+
+					for (size_t m = 0; m < gSkeleton.pJoints.size(); m++)
+					{
+						if (gSkeleton.pJoints[m].pName == lNode->GetName())
+						{
+							FbxVector4 lXaxis = lNode->EvaluateGlobalTransform().GetRow(0);
+							FbxVector4 lYaxis = lNode->EvaluateGlobalTransform().GetRow(1);
+							FbxVector4 lZaxis = lNode->EvaluateGlobalTransform().GetRow(2);
+							FbxVector4 lPosition = lNode->EvaluateGlobalTransform().GetRow(3);
+
+							gSkeleton.pJoints[m].pXAxis = DirectX::XMFLOAT4(lXaxis[0], lXaxis[1], lXaxis[2], lXaxis[3]);
+							gSkeleton.pJoints[m].pYAxis = DirectX::XMFLOAT4(lYaxis[0], lYaxis[1], lYaxis[2], lYaxis[3]);
+							gSkeleton.pJoints[m].pZAxis = DirectX::XMFLOAT4(lZaxis[0], lZaxis[1], lZaxis[2], lZaxis[3]);
+							gSkeleton.pJoints[m].pPosition = DirectX::XMFLOAT4(lPosition[0], lPosition[1], lPosition[2], lPosition[3]);
+
+							gSkeleton.pJoints[m].pMatrix = DirectX::XMMATRIX(lXaxis[0], lXaxis[1], lXaxis[2], lXaxis[3],
+								lYaxis[0], lYaxis[1], lYaxis[2], lYaxis[3],
+								lZaxis[0], lZaxis[1], lZaxis[2], lZaxis[3],
+								lPosition[0], lPosition[1], lPosition[2], lPosition[3]);
+						}
+					}
+
+				}
 
 				if (!lPose->IsBindPose())
 				{
@@ -308,14 +353,14 @@ namespace FBXLibrary
 
 				FbxString lMatrixValue;
 
-				for (k = 0; k<4; k++)
+				for (k = 0; k < 4; k++)
 				{
 					FbxMatrix  lMatrix = lPose->GetMatrix(j);
 					FbxVector4 lRow = lMatrix.GetRow(k);
 					char        lRowValue[1024];
 
 					FBXSDK_sprintf(lRowValue, 1024, "%9.4f %9.4f %9.4f %9.4f\n", lRow[0], lRow[1], lRow[2], lRow[3]);
-					lMatrixValue += FbxString("        ") + FbxString(lRowValue);
+					lMatrixValue += FbxString("		    ") + FbxString(lRowValue);
 				}
 
 				DisplayString("", lMatrixValue.Buffer());
@@ -344,7 +389,7 @@ namespace FBXLibrary
 
 				FbxString lMatrixValue;
 
-				for (k = 0; k<4; k++)
+				for (k = 0; k < 4; k++)
 				{
 					FbxVector4 lRow = lGlobalPosition.GetRow(k);
 					char        lRowValue[1024];
@@ -907,5 +952,41 @@ namespace FBXLibrary
 		//
 		lTmpVector = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
 		FBXSDK_printf("        Scaling:     %f %f %f\n", lTmpVector[0], lTmpVector[1], lTmpVector[2]);
+	}
+
+	void FBX_Functions::ProcessSkeletonHierarchy(FbxNode* pRootNode)
+	{
+		for (int childIndex = 0; childIndex < pRootNode->GetChildCount(); ++childIndex)
+		{
+			FbxNode* currNode = pRootNode->GetChild(childIndex);
+			ProcessSkeletonHierarchyRecursively(currNode, 0, 0, -1);
+		}
+	}
+
+	void FBX_Functions::ProcessSkeletonHierarchyRecursively(FbxNode* pInNode, int pInDepth, int pMyIndex, int pInParentIndex)
+	{
+		if (pInNode->GetNodeAttribute() && pInNode->GetNodeAttribute()->GetAttributeType() && pInNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eSkeleton)
+		{
+			Joint currJoint;
+			currJoint.pParentIndex = pInParentIndex;
+			currJoint.pName = pInNode->GetName();
+			gSkeleton.pJoints.push_back(currJoint);
+		}
+		for (int i = 0; i < pInNode->GetChildCount(); i++)
+		{
+			ProcessSkeletonHierarchyRecursively(pInNode->GetChild(i), pInDepth + 1, gSkeleton.pJoints.size(), pMyIndex);
+		}
+	}
+
+	FbxAMatrix FBX_Functions::GetGeometryTransformation(FbxNode* pInNode)
+	{
+		if (!pInNode)
+			throw std::exception("Null for mesh geometry");
+
+		const FbxVector4 lT = pInNode->GetGeometricTranslation(FbxNode::eSourcePivot);
+		const FbxVector4 lR = pInNode->GetGeometricRotation(FbxNode::eSourcePivot);
+		const FbxVector4 lS = pInNode->GetGeometricScaling(FbxNode::eSourcePivot);
+
+		return FbxAMatrix(lT, lR, lS);
 	}
 }

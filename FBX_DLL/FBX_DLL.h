@@ -7,7 +7,7 @@ namespace FBXLibrary
 	// This class is exported from the FBX_DLL.dll
 	class FBX_Functions
 	{
-		 
+		Skeleton gSkeleton;
 	public:
 		FBX_Functions(void);
 		// TODO: add your methods here.
@@ -38,5 +38,12 @@ namespace FBXLibrary
 		void DisplayPivotsAndLimits(FbxNode* pNode);
 		void DisplayTransformPropagation(FbxNode* pNode);
 		void DisplayGeometricTransform(FbxNode* pNode);
+
+		// Personal functions for looping through skeleton hierarchy
+		void ProcessSkeletonHierarchy(FbxNode* pRootNode);
+		void ProcessSkeletonHierarchyRecursively(FbxNode* pInNode, int pInDepth, int pMyIndex, int pInParentIndex);
+	
+		// Personal functions to get the matrices of nodes
+		FbxAMatrix GetGeometryTransformation(FbxNode* pInNode);
 	};
 }
