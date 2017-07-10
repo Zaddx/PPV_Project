@@ -87,7 +87,7 @@ bool Init_and_Inter::InitializeDirect3d11App(HINSTANCE hInstance, HWND hWnd)
 	wfdesc.FillMode = D3D11_FILL_WIREFRAME;
 	wfdesc.CullMode = D3D11_CULL_NONE;
 	hr = d3d11Device->CreateRasterizerState(&wfdesc, &WireFrame);
-	d3d11DevCon->RSSetState(WireFrame);
+	d3d11DevCon->RSSetState(WireFrame); 
 
 	return true;
 }

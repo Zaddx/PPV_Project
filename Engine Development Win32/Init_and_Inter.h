@@ -110,7 +110,7 @@ private:
 
 	ID3D11Buffer* cbPerObjectBuffer;
 
-	ID3D11RasterizerState* WireFrame;
+	ID3D11RasterizerState* WireFrame; 
 
 	XMMATRIX WVP;
 	XMMATRIX cube1World;
