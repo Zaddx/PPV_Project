@@ -81,6 +81,14 @@ bool Init_and_Inter::InitializeDirect3d11App(HINSTANCE hInstance, HWND hWnd)
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
 
+	// Initialize the WireFrame Rasterizer State
+	D3D11_RASTERIZER_DESC wfdesc;
+	ZeroMemory(&wfdesc, sizeof(D3D11_RASTERIZER_DESC));
+	wfdesc.FillMode = D3D11_FILL_WIREFRAME;
+	wfdesc.CullMode = D3D11_CULL_NONE;
+	hr = d3d11Device->CreateRasterizerState(&wfdesc, &WireFrame);
+	d3d11DevCon->RSSetState(WireFrame);
+
 	return true;
 }
 
@@ -95,6 +103,8 @@ void Init_and_Inter::ReleaseObjects()
 	depthStencilBuffer->Release();
 
 	cbPerObjectBuffer->Release();
+
+	WireFrame->Release();
 
 	_square.squareVertexBuffer->Release();
 	_square.squareIndexBuffer->Release();
@@ -236,13 +246,131 @@ bool Init_and_Inter::InitScene(User_Input &_input)
 
 #pragma region FBX Stuff
 
+#pragma region Mage Model
+
 	// Load the model
-	char* fileName = "mage.fbx";
-	char** filename = &fileName;
-	fbx_Exec.Load_FBX(filename);
+	char* magefileName = "mage.fbx";
+	char** magefilename = &magefileName;
+	fbx_Exec.Load_FBX(magefilename);
 
 	Skeleton* mageSkeleton;
 	mageSkeleton = fbx_Exec.getSkeleton();
+
+	// Add the lines into the joint_debugRenderer
+	for (unsigned int i = 0; i < mageSkeleton->pJoints.size(); i++)
+	{
+		// Get the Position, X,Y,Z Axis
+		XMFLOAT3 pPosition = XMFLOAT3(mageSkeleton->pJoints[i].pPosition.x, mageSkeleton->pJoints[i].pPosition.y, mageSkeleton->pJoints[i].pPosition.z);
+		XMFLOAT3 pXAxis = XMFLOAT3(mageSkeleton->pJoints[i].pXAxis.x, mageSkeleton->pJoints[i].pXAxis.y, mageSkeleton->pJoints[i].pXAxis.z);
+		XMFLOAT3 pYAxis = XMFLOAT3(mageSkeleton->pJoints[i].pYAxis.x, mageSkeleton->pJoints[i].pYAxis.y, mageSkeleton->pJoints[i].pYAxis.z);
+		XMFLOAT3 pZAxis = XMFLOAT3(mageSkeleton->pJoints[i].pZAxis.x, mageSkeleton->pJoints[i].pZAxis.y, mageSkeleton->pJoints[i].pZAxis.z);
+
+		// Add lines to the debug renderer
+		// Draw X axis in red
+		XMFLOAT3 pPosToXAxis = XMFLOAT3(pPosition.x + pXAxis.x, pPosition.y + pXAxis.y, pPosition.z + pXAxis.z);
+		mage_joint_debugRenderer.add_debug_line(pPosition, pPosToXAxis, XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));
+		// Draw Y axis in green
+		XMFLOAT3 pPosToYAxis = XMFLOAT3(pPosition.x + pYAxis.x, pPosition.y + pYAxis.y, pPosition.z + pYAxis.z);
+		mage_joint_debugRenderer.add_debug_line(pPosition, pPosToYAxis, XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f));
+		// Draw Z axis in blue
+		XMFLOAT3 pPosToZAxis = XMFLOAT3(pPosition.x + pZAxis.x, pPosition.y + pZAxis.y, pPosition.z + pZAxis.z);
+		mage_joint_debugRenderer.add_debug_line(pPosition, pPosToZAxis, XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f));
+	}
+
+	// Push cpu to gpu
+	mage_joint_debugRenderer.push_to_gpu(d3d11DevCon);
+
+	// Add the bones to the bone_debugRenderer
+	for (unsigned int i = 0; i < mageSkeleton->pJoints.size(); i++)
+	{
+		// Create a variable to hold the parent index
+		int pParentIndex = 0;
+
+		// Get the next parent index
+		pParentIndex = mageSkeleton->pJoints[i].pParentIndex;
+
+		// It is the root
+		if (pParentIndex == -1)
+			continue;
+
+		else
+		{
+			// Get the line between parent to child
+			XMFLOAT3 pChildPosition = XMFLOAT3(mageSkeleton->pJoints[i].pPosition.x, mageSkeleton->pJoints[i].pPosition.y, mageSkeleton->pJoints[i].pPosition.z);
+			XMFLOAT3 pParentPosition = XMFLOAT3(mageSkeleton->pJoints[pParentIndex].pPosition.x, mageSkeleton->pJoints[pParentIndex].pPosition.y, mageSkeleton->pJoints[pParentIndex].pPosition.z);
+
+			// Add the line to the bone_debugRenderer
+			mage_bone_debugRenderer.add_debug_line(pChildPosition, pParentPosition, XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+		}
+	}
+
+	// Push cpu to gpu
+	mage_bone_debugRenderer.push_to_gpu(d3d11DevCon);
+
+#pragma endregion
+
+#pragma region Teddy Model
+
+	// Load the model
+	char* teddyfileName = "teddy.fbx";
+	char** teddyfilename = &teddyfileName;
+	fbx_Exec.Load_FBX(teddyfilename);
+
+	Skeleton* teddySkeleton;
+	teddySkeleton = fbx_Exec.getSkeleton();
+
+	// Add the lines into the joint_debugRenderer
+	for (unsigned int i = 0; i < teddySkeleton->pJoints.size(); i++)
+	{
+		// Get the Position, X,Y,Z Axis
+		XMFLOAT3 pPosition = XMFLOAT3(teddySkeleton->pJoints[i].pPosition.x, teddySkeleton->pJoints[i].pPosition.y, teddySkeleton->pJoints[i].pPosition.z);
+		XMFLOAT3 pXAxis = XMFLOAT3(teddySkeleton->pJoints[i].pXAxis.x, teddySkeleton->pJoints[i].pXAxis.y, teddySkeleton->pJoints[i].pXAxis.z);
+		XMFLOAT3 pYAxis = XMFLOAT3(teddySkeleton->pJoints[i].pYAxis.x, teddySkeleton->pJoints[i].pYAxis.y, teddySkeleton->pJoints[i].pYAxis.z);
+		XMFLOAT3 pZAxis = XMFLOAT3(teddySkeleton->pJoints[i].pZAxis.x, teddySkeleton->pJoints[i].pZAxis.y, teddySkeleton->pJoints[i].pZAxis.z);
+
+		// Add lines to the debug renderer
+		// Draw X axis in red
+		XMFLOAT3 pPosToXAxis = XMFLOAT3(pPosition.x + pXAxis.x, pPosition.y + pXAxis.y, pPosition.z + pXAxis.z);
+		teddy_joint_debugRenderer.add_debug_line(pPosition, pPosToXAxis, XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));
+		// Draw Y axis in green
+		XMFLOAT3 pPosToYAxis = XMFLOAT3(pPosition.x + pYAxis.x, pPosition.y + pYAxis.y, pPosition.z + pYAxis.z);
+		teddy_joint_debugRenderer.add_debug_line(pPosition, pPosToYAxis, XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f));
+		// Draw Z axis in blue
+		XMFLOAT3 pPosToZAxis = XMFLOAT3(pPosition.x + pZAxis.x, pPosition.y + pZAxis.y, pPosition.z + pZAxis.z);
+		teddy_joint_debugRenderer.add_debug_line(pPosition, pPosToZAxis, XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f));
+	}
+
+	// Push cpu to gpu
+	teddy_joint_debugRenderer.push_to_gpu(d3d11DevCon);
+
+	// Add the bones to the bone_debugRenderer
+	for (unsigned int i = 0; i < teddySkeleton->pJoints.size(); i++)
+	{
+		// Create a variable to hold the parent index
+		int pParentIndex = 0;
+
+		// Get the next parent index
+		pParentIndex = teddySkeleton->pJoints[i].pParentIndex;
+
+		// It is the root
+		if (pParentIndex == -1)
+			continue;
+
+		else
+		{
+			// Get the line between parent to child
+			XMFLOAT3 pChildPosition = XMFLOAT3(teddySkeleton->pJoints[i].pPosition.x, teddySkeleton->pJoints[i].pPosition.y, teddySkeleton->pJoints[i].pPosition.z);
+			XMFLOAT3 pParentPosition = XMFLOAT3(teddySkeleton->pJoints[pParentIndex].pPosition.x, teddySkeleton->pJoints[pParentIndex].pPosition.y, teddySkeleton->pJoints[pParentIndex].pPosition.z);
+
+			// Add the line to the bone_debugRenderer
+			teddy_bone_debugRenderer.add_debug_line(pChildPosition, pParentPosition, XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+		}
+	}
+
+	// Push cpu to gpu
+	teddy_bone_debugRenderer.push_to_gpu(d3d11DevCon);
+
+#pragma endregion
 
 #pragma endregion
 
@@ -284,6 +412,20 @@ void Init_and_Inter::UpdateScene(double time, User_Input &_input)
 
 	//Set cube2's world space matrix
 	cube2World = Rotation * Scale;
+
+	// Define the mage's world space matrix
+	Rotation = XMMatrixRotationAxis(rotyaxis, 0);
+	Scale = XMMatrixScaling(input.scaleX, input.scaleY, 1.3f);
+
+	// Set mage's world space matrix
+	mageWorld = Rotation * Scale;
+
+	// Define the Teddy's world space matrix
+	Translation = XMMatrixTranslation(4.0f, 0.0f, 0.0f);
+	Rotation = XMMatrixRotationAxis(rotyaxis, 0);
+
+	// Set Teddy's world space matrix
+	teddyWorld = XMMatrixIdentity();
 
 	//Update the colors of our scene
 	/*red += colormodr * 0.00005f;
@@ -329,21 +471,45 @@ void Init_and_Inter::DrawScene()
 	d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	//Set the WVP matrix and send it to the constant buffer in effect file
-	WVP = cube1World * camView * camProjection;
+	//WVP = cube1World * camView * camProjection;
+	//cbPerObj.WVP = XMMatrixTranspose(WVP);
+	//d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
+	//d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
+
+	////Draw the first cube
+	//d3d11DevCon->DrawIndexed(36, 0, 0);
+
+	//WVP = cube2World * camView * camProjection;
+	//cbPerObj.WVP = XMMatrixTranspose(WVP);
+	//d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
+	//d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
+
+	////Draw the second cube
+	//d3d11DevCon->DrawIndexed(36, 0, 0);
+
+	// Setup the WVP for the mage
+	WVP = mageWorld * camView * camProjection;
 	cbPerObj.WVP = XMMatrixTranspose(WVP);
 	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 
-	//Draw the first cube
-	d3d11DevCon->DrawIndexed(36, 0, 0);
+	// Draw the mage_joint_DebugRenderer Lines
+	mage_joint_debugRenderer.RenderLines();
 
-	WVP = cube2World * camView * camProjection;
+	// Draw the mage_bone_debugRenderer Lines
+	mage_bone_debugRenderer.RenderLines();
+
+	// Setup the WVP for the Teddy
+	WVP = teddyWorld * camView * camProjection;
 	cbPerObj.WVP = XMMatrixTranspose(WVP);
 	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 
-	//Draw the second cube
-	d3d11DevCon->DrawIndexed(36, 0, 0);
+	// Draw the teddy_joint_DebugRenderer Lines
+	teddy_joint_debugRenderer.RenderLines();
+
+	// Draw the teddy_bone_debugRenderer Lines
+	teddy_bone_debugRenderer.RenderLines();
 
 	// Present the backbuffer to the screen
 	SwapChain->Present(0, 0);

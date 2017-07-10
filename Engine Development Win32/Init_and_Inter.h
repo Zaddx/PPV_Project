@@ -110,9 +110,13 @@ private:
 
 	ID3D11Buffer* cbPerObjectBuffer;
 
+	ID3D11RasterizerState* WireFrame;
+
 	XMMATRIX WVP;
 	XMMATRIX cube1World;
 	XMMATRIX cube2World;
+	XMMATRIX mageWorld;
+	XMMATRIX teddyWorld;
 	XMMATRIX camView;
 	XMMATRIX camProjection;
 
@@ -152,7 +156,11 @@ private:
 	cbPerObject cbPerObj;
 
 	// Debug Renderer object
-	Debug_Renderer debugRenderer = Debug_Renderer();
+	Debug_Renderer mage_joint_debugRenderer = Debug_Renderer();
+	Debug_Renderer mage_bone_debugRenderer = Debug_Renderer();
+	Debug_Renderer teddy_joint_debugRenderer = Debug_Renderer();
+	Debug_Renderer teddy_bone_debugRenderer = Debug_Renderer();
+
 
 	// User_Input object
 	User_Input input;
