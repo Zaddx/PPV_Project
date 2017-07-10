@@ -23,6 +23,7 @@ namespace FBXLibrary
 		
 		// Displays
 		void DisplayMetaData(FbxScene* pScene);
+		void DisplayMesh(FbxNode* pNode);
 		void DisplayPose(FbxScene* pScene);
 		void DisplayString(const char* pHeader, const char* pValue = "", const char* pSuffix = "");
 		void DisplayBool(const char* pHeader, bool pValue, const char* pSuffix = "");
@@ -39,6 +40,20 @@ namespace FBXLibrary
 		void DisplayPivotsAndLimits(FbxNode* pNode);
 		void DisplayTransformPropagation(FbxNode* pNode);
 		void DisplayGeometricTransform(FbxNode* pNode);
+		void DisplayControlsPoints(FbxMesh* pMesh);
+		void DisplayPolygons(FbxMesh* pMesh);
+		void DisplayTextureNames(FbxProperty &pProperty, FbxString& pConnectionString);
+		void DisplayMaterialTextureConnections(FbxSurfaceMaterial* pMaterial, char * header, int pMatId, int l);
+		void DisplayMaterialConnections(FbxMesh* pMesh);
+		void DisplayMaterialMapping(FbxMesh* pMesh);
+		void DisplayMetaDataConnections(FbxObject* pObject);
+		void DisplayMaterial(FbxGeometry* pGeometry);
+		void DisplayTexture(FbxGeometry* pGeometry);
+		void FindAndDisplayTextureInfoByProperty(FbxProperty pProperty, bool& pDisplayHeader, int pMaterialIndex);
+		void DisplayTextureInfo(FbxTexture* pTexture, int pBlendMode);
+		void DisplayLink(FbxGeometry* pGeometry);
+		void DisplayShape(FbxGeometry* pGeometry);
+		void DisplayCache(FbxGeometry* pGeometry);
 
 		// Personal functions for looping through skeleton hierarchy
 		void ProcessSkeletonHierarchy(FbxNode* pRootNode);

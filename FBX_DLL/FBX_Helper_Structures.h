@@ -22,9 +22,18 @@ struct Bone
 	Joint pStart, pEnd; // Between joint and it's parent
 };
 
+struct Mesh
+{
+	std::string pName;
+	std::string pTextureName;
+	std::vector<DirectX::XMFLOAT3> pVertices;
+};
+
 struct Skeleton
 {
 	std::vector<Joint> pJoints;
 	std::vector<Bone> pBones;	// Optional
 	std::string pName;
+
+	Mesh pMesh;
 };
