@@ -87,7 +87,7 @@ bool Init_and_Inter::InitializeDirect3d11App(HINSTANCE hInstance, HWND hWnd)
 	wfdesc.FillMode = D3D11_FILL_WIREFRAME;
 	wfdesc.CullMode = D3D11_CULL_NONE;
 	hr = d3d11Device->CreateRasterizerState(&wfdesc, &WireFrame);
-	d3d11DevCon->RSSetState(WireFrame); 
+	d3d11DevCon->RSSetState(WireFrame);
 
 	return true;
 }
@@ -134,6 +134,8 @@ bool Init_and_Inter::InitScene(User_Input &_input)
 	// Pass in the User_Input
 	input = _input;
 
+#pragma region Shader Stuff
+
 	// Compile Shaders from shader files
 	hr = D3DCompileFromFile(L"SimpleVertexShader.hlsl", NULL, NULL, "main", "vs_5_0", 0, 0, &_square.VS_Buffer, NULL);
 	hr = D3DCompileFromFile(L"SimplePixelShader.hlsl", NULL, NULL, "main", "ps_5_0", 0, 0, &_square.PS_Buffer, NULL);
@@ -149,6 +151,8 @@ bool Init_and_Inter::InitScene(User_Input &_input)
 	hr = d3d11Device->CreatePixelShader(gMageModel.pPS_Buffer->GetBufferPointer(), gMageModel.pPS_Buffer->GetBufferSize(), NULL, &gMageModel.pPS);
 	hr = d3d11Device->CreateVertexShader(gTeddyModel.pVS_Buffer->GetBufferPointer(), gTeddyModel.pVS_Buffer->GetBufferSize(), NULL, &gTeddyModel.pVS);
 	hr = d3d11Device->CreatePixelShader(gTeddyModel.pPS_Buffer->GetBufferPointer(), gTeddyModel.pPS_Buffer->GetBufferSize(), NULL, &gTeddyModel.pPS);
+
+#pragma endregion
 
 #pragma region Cube
 
@@ -540,6 +544,24 @@ void Init_and_Inter::UpdateScene(double time, User_Input &_input)
 
 void Init_and_Inter::DrawScene()
 {
+
+#pragma region Initial Stuff (Reseting Defaults)
+
+	//Set Primitive Topology
+	d3d11DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Clear our backbuffer to the updated color
+	// float bgColor[4] = { red, blue, green, 1.0f };
+	float bgColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	d3d11DevCon->ClearRenderTargetView(renderTargetView, bgColor);
+
+	//Refresh the Depth/Stencil view
+	d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+#pragma endregion
+
+#pragma region Cube Stuff
+
 	// Set Vertex and Pixel Shaders
 	d3d11DevCon->VSSetShader(_square.VS, 0, 0);
 	d3d11DevCon->PSSetShader(_square.PS, 0, 0);
@@ -557,17 +579,6 @@ void Init_and_Inter::DrawScene()
 	//Set the Input Layout
 	d3d11DevCon->IASetInputLayout(_square.vertLayout);
 
-	//Set Primitive Topology
-	d3d11DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	// Clear our backbuffer to the updated color
-	// float bgColor[4] = { red, blue, green, 1.0f };
-	float bgColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	d3d11DevCon->ClearRenderTargetView(renderTargetView, bgColor);
-
-	//Refresh the Depth/Stencil view
-	d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
 	//Set the WVP matrix and send it to the constant buffer in effect file
 	WVP = cube1World * camView * camProjection;
 	cbPerObj.WVP = XMMatrixTranspose(WVP);
@@ -577,13 +588,11 @@ void Init_and_Inter::DrawScene()
 	//Draw the first cube
 	d3d11DevCon->DrawIndexed(36, 0, 0);
 
-	//WVP = cube2World * camView * camProjection;
-	//cbPerObj.WVP = XMMatrixTranspose(WVP);
-	//d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
-	//d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
+#pragma endregion
 
-	////Draw the second cube
-	//d3d11DevCon->DrawIndexed(36, 0, 0);
+#pragma region Debug Renderer Stuff
+
+#pragma region Mage Debug Renderer
 
 	// Setup the WVP for the mage
 	WVP = mageWorld * camView * camProjection;
@@ -597,6 +606,10 @@ void Init_and_Inter::DrawScene()
 	// Draw the mage_bone_debugRenderer Lines
 	mage_bone_debugRenderer.RenderLines();
 
+#pragma endregion
+
+#pragma region Teddy Debug Renderer
+
 	// Setup the WVP for the Teddy
 	WVP = teddyWorld * camView * camProjection;
 	cbPerObj.WVP = XMMatrixTranspose(WVP);
@@ -608,6 +621,10 @@ void Init_and_Inter::DrawScene()
 
 	// Draw the teddy_bone_debugRenderer Lines
 	teddy_bone_debugRenderer.RenderLines();
+
+#pragma endregion
+
+#pragma endregion
 
 #pragma region Meshes
 
@@ -632,7 +649,7 @@ void Init_and_Inter::DrawScene()
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 
 	//Draw the mage model mesh
-	//d3d11DevCon->Draw(gMageSkeleton->pMesh.pVertices.size(), 0);
+	d3d11DevCon->Draw(gMageSkeleton->pMesh.pVertices.size(), 0);
 
 #pragma endregion
 
@@ -662,7 +679,6 @@ void Init_and_Inter::DrawScene()
 #pragma endregion
 
 #pragma endregion
-
 
 	// Present the backbuffer to the screen
 	SwapChain->Present(0, 0);
