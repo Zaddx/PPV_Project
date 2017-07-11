@@ -1262,6 +1262,9 @@ namespace FBXLibrary
 				// Pushback each vertex into the polygon
 				lTempPolygon.pVertices.push_back(lTempVertex);
 
+				// Pushback each vertex into the mesh
+				gMesh.pVertices.push_back(lTempVertex);
+
 			} // for polygonSize
 
 			// Pushback each polygon mesh into the overall mesh

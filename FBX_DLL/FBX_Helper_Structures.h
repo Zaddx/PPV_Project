@@ -39,6 +39,7 @@ struct Mesh
 	std::string pName;
 	std::string pTextureName;
 	std::vector<Mesh_Polygon> pPolygon;
+	std::vector<Mesh_Vertex> pVertices;
 };
 
 struct Skeleton

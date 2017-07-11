@@ -169,9 +169,11 @@ private:
 
 	// Skeleton Globals
 	Skeleton* gMageSkeleton;
+	Skeleton* gTeddySkeleton;
 
 	// Model Globals
-	Model pMageModel;
+	Model gMageModel;
+	Model gTeddyModel;
 
 public:
 

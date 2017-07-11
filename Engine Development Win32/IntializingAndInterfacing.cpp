@@ -106,13 +106,22 @@ void Init_and_Inter::ReleaseObjects()
 
 	WireFrame->Release();
 
-	//_square.squareVertexBuffer->Release();
-	//_square.squareIndexBuffer->Release();
+	// Release the cube objects
+	_square.squareVertexBuffer->Release();
+	_square.squareIndexBuffer->Release();
 	_square.VS->Release();
 	_square.PS->Release();
 	_square.VS_Buffer->Release();
 	_square.PS_Buffer->Release();
 	_square.vertLayout->Release();
+
+	// Release the mage model objects
+	gMageModel.pVertexBuffer->Release();
+	gMageModel.pVS->Release();
+	gMageModel.pPS->Release();
+	gMageModel.pVS_Buffer->Release();
+	gMageModel.pPS_Buffer->Release();
+	gMageModel.pvertLayout->Release();
 
 	// Release the User_Input stuff
 	input.DIKeyboard->Unacquire();
@@ -128,15 +137,18 @@ bool Init_and_Inter::InitScene(User_Input &_input)
 	// Compile Shaders from shader files
 	hr = D3DCompileFromFile(L"SimpleVertexShader.hlsl", NULL, NULL, "main", "vs_5_0", 0, 0, &_square.VS_Buffer, NULL);
 	hr = D3DCompileFromFile(L"SimplePixelShader.hlsl", NULL, NULL, "main", "ps_5_0", 0, 0, &_square.PS_Buffer, NULL);
-	hr = D3DCompileFromFile(L"ModelVertexShader.hlsl", NULL, NULL, "main", "vs_5_0", 0, 0, &pMageModel.pVS_Buffer, NULL);
-	hr = D3DCompileFromFile(L"ModelPixelShader.hlsl", NULL, NULL, "main", "ps_5_0", 0, 0, &pMageModel.pPS_Buffer, NULL);
-
+	hr = D3DCompileFromFile(L"ModelVertexShader.hlsl", NULL, NULL, "main", "vs_5_0", 0, 0, &gMageModel.pVS_Buffer, NULL);
+	hr = D3DCompileFromFile(L"ModelPixelShader.hlsl", NULL, NULL, "main", "ps_5_0", 0, 0, &gMageModel.pPS_Buffer, NULL);
+	hr = D3DCompileFromFile(L"ModelVertexShader.hlsl", NULL, NULL, "main", "vs_5_0", 0, 0, &gTeddyModel.pVS_Buffer, NULL);
+	hr = D3DCompileFromFile(L"ModelPixelShader.hlsl", NULL, NULL, "main", "ps_5_0", 0, 0, &gTeddyModel.pPS_Buffer, NULL);
 
 	// Create the shader objects
 	hr = d3d11Device->CreateVertexShader(_square.VS_Buffer->GetBufferPointer(), _square.VS_Buffer->GetBufferSize(), NULL, &_square.VS);
 	hr = d3d11Device->CreatePixelShader(_square.PS_Buffer->GetBufferPointer(), _square.PS_Buffer->GetBufferSize(), NULL, &_square.PS);
-	hr = d3d11Device->CreateVertexShader(_square.VS_Buffer->GetBufferPointer(), pMageModel.pVS_Buffer->GetBufferSize(), NULL, &pMageModel.pVS);
-	hr = d3d11Device->CreatePixelShader(_square.PS_Buffer->GetBufferPointer(), pMageModel.pPS_Buffer->GetBufferSize(), NULL, &pMageModel.pPS);
+	hr = d3d11Device->CreateVertexShader(gMageModel.pVS_Buffer->GetBufferPointer(), gMageModel.pVS_Buffer->GetBufferSize(), NULL, &gMageModel.pVS);
+	hr = d3d11Device->CreatePixelShader(gMageModel.pPS_Buffer->GetBufferPointer(), gMageModel.pPS_Buffer->GetBufferSize(), NULL, &gMageModel.pPS);
+	hr = d3d11Device->CreateVertexShader(gTeddyModel.pVS_Buffer->GetBufferPointer(), gTeddyModel.pVS_Buffer->GetBufferSize(), NULL, &gTeddyModel.pVS);
+	hr = d3d11Device->CreatePixelShader(gTeddyModel.pPS_Buffer->GetBufferPointer(), gTeddyModel.pPS_Buffer->GetBufferSize(), NULL, &gTeddyModel.pPS);
 
 #pragma region Cube
 
@@ -311,108 +323,149 @@ bool Init_and_Inter::InitScene(User_Input &_input)
 	// Push cpu to gpu
 	mage_bone_debugRenderer.push_to_gpu(d3d11DevCon);
 
-	//D3D11_BUFFER_DESC vertexBufferDesc;
-	//ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
+	// Create the vertex buffer
+	D3D11_BUFFER_DESC mage_vertexBufferDesc;
+	ZeroMemory(&mage_vertexBufferDesc, sizeof(mage_vertexBufferDesc));
 
-	//vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	//vertexBufferDesc.ByteWidth = sizeof(Mesh_Polygon) * gMageSkeleton->pMesh.pPolygon.size();
-	//vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	//vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	//vertexBufferDesc.MiscFlags = 0;
+	int mage_vertices_size = gMageSkeleton->pMesh.pVertices.size();
+	mage_vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	mage_vertexBufferDesc.ByteWidth = sizeof(Mesh_Vertex) * mage_vertices_size;
+	mage_vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	mage_vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	mage_vertexBufferDesc.MiscFlags = 0;
 
-	//D3D11_SUBRESOURCE_DATA vertexBufferData;
+	D3D11_SUBRESOURCE_DATA mage_vertexBufferData;
+	ZeroMemory(&mage_vertexBufferData, sizeof(mage_vertexBufferData));
 
-	//ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
+	mage_vertexBufferData.pSysMem = &gMageSkeleton->pMesh.pVertices[0];
+	hr = d3d11Device->CreateBuffer(&mage_vertexBufferDesc, &mage_vertexBufferData, &gMageModel.pVertexBuffer);
 
-	//vertexBufferData.pSysMem = &gMageSkeleton->pMesh.pPolygon._Get_data();
-	//hr = d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &pMageModel.pVertexBuffer);
+	// Create the Input Layout
+	// Layout for describing the triangle
+	D3D11_INPUT_ELEMENT_DESC mage_layout[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+	UINT mage_numElements = ARRAYSIZE(mage_layout);
 
-	//// Create the Input Layout
-	//// Layout for describing the triangle
-	//D3D11_INPUT_ELEMENT_DESC layout[] =
-	//{
-	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//	{ "COLOR", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//	{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//};
-	//UINT numElements = ARRAYSIZE(layout);
+	hr = d3d11Device->CreateInputLayout(mage_layout, mage_numElements, gMageModel.pVS_Buffer->GetBufferPointer(), gMageModel.pVS_Buffer->GetBufferSize(), &gMageModel.pvertLayout);
 
-	//hr = d3d11Device->CreateInputLayout(layout, numElements, pMageModel.pVS_Buffer->GetBufferPointer(), pMageModel.pVS_Buffer->GetBufferSize(), &pMageModel.pvertLayout);
+	//Create the buffer to send to the cbuffer in effect file
+	D3D11_BUFFER_DESC mage_cbbd;
+	ZeroMemory(&mage_cbbd, sizeof(D3D11_BUFFER_DESC));
 
-	////Create the buffer to send to the cbuffer in effect file
-	//D3D11_BUFFER_DESC cbbd;
-	//ZeroMemory(&cbbd, sizeof(D3D11_BUFFER_DESC));
+	mage_cbbd.Usage = D3D11_USAGE_DEFAULT;
+	mage_cbbd.ByteWidth = sizeof(cbPerObject);
+	mage_cbbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	mage_cbbd.CPUAccessFlags = 0;
+	mage_cbbd.MiscFlags = 0;
 
-	//cbbd.Usage = D3D11_USAGE_DEFAULT;
-	//cbbd.ByteWidth = sizeof(cbPerObject);
-	//cbbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	//cbbd.CPUAccessFlags = 0;
-	//cbbd.MiscFlags = 0;
-
-	//hr = d3d11Device->CreateBuffer(&cbbd, NULL, &cbPerObjectBuffer);
+	hr = d3d11Device->CreateBuffer(&mage_cbbd, NULL, &cbPerObjectBuffer);
 
 #pragma endregion
 
 #pragma region Teddy Model
 
 	// Load the model
-	//char* teddyfileName = "teddy.fbx";
-	//char** teddyfilename = &teddyfileName;
-	//fbx_Exec.Load_FBX(teddyfilename);
+	char* teddyfileName = "teddy.fbx";
+	char** teddyfilename = &teddyfileName;
+	fbx_Exec.Load_FBX(teddyfilename);
 
-	//Skeleton* teddySkeleton;
-	//teddySkeleton = fbx_Exec.getSkeleton();
+	gTeddySkeleton = fbx_Exec.getSkeleton();
 
-	//// Add the lines into the joint_debugRenderer
-	//for (unsigned int i = 0; i < teddySkeleton->pJoints.size(); i++)
-	//{
-	//	// Get the Position, X,Y,Z Axis
-	//	XMFLOAT3 pPosition = XMFLOAT3(teddySkeleton->pJoints[i].pPosition.x, teddySkeleton->pJoints[i].pPosition.y, teddySkeleton->pJoints[i].pPosition.z);
-	//	XMFLOAT3 pXAxis = XMFLOAT3(teddySkeleton->pJoints[i].pXAxis.x, teddySkeleton->pJoints[i].pXAxis.y, teddySkeleton->pJoints[i].pXAxis.z);
-	//	XMFLOAT3 pYAxis = XMFLOAT3(teddySkeleton->pJoints[i].pYAxis.x, teddySkeleton->pJoints[i].pYAxis.y, teddySkeleton->pJoints[i].pYAxis.z);
-	//	XMFLOAT3 pZAxis = XMFLOAT3(teddySkeleton->pJoints[i].pZAxis.x, teddySkeleton->pJoints[i].pZAxis.y, teddySkeleton->pJoints[i].pZAxis.z);
+	// Add the lines into the joint_debugRenderer
+	for (unsigned int i = 0; i < gTeddySkeleton->pJoints.size(); i++)
+	{
+		// Get the Position, X,Y,Z Axis
+		XMFLOAT3 pPosition = XMFLOAT3(gTeddySkeleton->pJoints[i].pPosition.x, gTeddySkeleton->pJoints[i].pPosition.y, gTeddySkeleton->pJoints[i].pPosition.z);
+		XMFLOAT3 pXAxis = XMFLOAT3(gTeddySkeleton->pJoints[i].pXAxis.x, gTeddySkeleton->pJoints[i].pXAxis.y, gTeddySkeleton->pJoints[i].pXAxis.z);
+		XMFLOAT3 pYAxis = XMFLOAT3(gTeddySkeleton->pJoints[i].pYAxis.x, gTeddySkeleton->pJoints[i].pYAxis.y, gTeddySkeleton->pJoints[i].pYAxis.z);
+		XMFLOAT3 pZAxis = XMFLOAT3(gTeddySkeleton->pJoints[i].pZAxis.x, gTeddySkeleton->pJoints[i].pZAxis.y, gTeddySkeleton->pJoints[i].pZAxis.z);
 
-	//	// Add lines to the debug renderer
-	//	// Draw X axis in red
-	//	XMFLOAT3 pPosToXAxis = XMFLOAT3(pPosition.x + pXAxis.x, pPosition.y + pXAxis.y, pPosition.z + pXAxis.z);
-	//	teddy_joint_debugRenderer.add_debug_line(pPosition, pPosToXAxis, XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));
-	//	// Draw Y axis in green
-	//	XMFLOAT3 pPosToYAxis = XMFLOAT3(pPosition.x + pYAxis.x, pPosition.y + pYAxis.y, pPosition.z + pYAxis.z);
-	//	teddy_joint_debugRenderer.add_debug_line(pPosition, pPosToYAxis, XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f));
-	//	// Draw Z axis in blue
-	//	XMFLOAT3 pPosToZAxis = XMFLOAT3(pPosition.x + pZAxis.x, pPosition.y + pZAxis.y, pPosition.z + pZAxis.z);
-	//	teddy_joint_debugRenderer.add_debug_line(pPosition, pPosToZAxis, XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f));
-	//}
+		// Add lines to the debug renderer
+		// Draw X axis in red
+		XMFLOAT3 pPosToXAxis = XMFLOAT3(pPosition.x + pXAxis.x, pPosition.y + pXAxis.y, pPosition.z + pXAxis.z);
+		teddy_joint_debugRenderer.add_debug_line(pPosition, pPosToXAxis, XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));
+		// Draw Y axis in green
+		XMFLOAT3 pPosToYAxis = XMFLOAT3(pPosition.x + pYAxis.x, pPosition.y + pYAxis.y, pPosition.z + pYAxis.z);
+		teddy_joint_debugRenderer.add_debug_line(pPosition, pPosToYAxis, XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f));
+		// Draw Z axis in blue
+		XMFLOAT3 pPosToZAxis = XMFLOAT3(pPosition.x + pZAxis.x, pPosition.y + pZAxis.y, pPosition.z + pZAxis.z);
+		teddy_joint_debugRenderer.add_debug_line(pPosition, pPosToZAxis, XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f));
+	}
 
-	//// Push cpu to gpu
-	//teddy_joint_debugRenderer.push_to_gpu(d3d11DevCon);
+	// Push cpu to gpu
+	teddy_joint_debugRenderer.push_to_gpu(d3d11DevCon);
 
-	//// Add the bones to the bone_debugRenderer
-	//for (unsigned int i = 0; i < teddySkeleton->pJoints.size(); i++)
-	//{
-	//	// Create a variable to hold the parent index
-	//	int pParentIndex = 0;
+	// Add the bones to the bone_debugRenderer
+	for (unsigned int i = 0; i < gTeddySkeleton->pJoints.size(); i++)
+	{
+		// Create a variable to hold the parent index
+		int pParentIndex = 0;
 
-	//	// Get the next parent index
-	//	pParentIndex = teddySkeleton->pJoints[i].pParentIndex;
+		// Get the next parent index
+		pParentIndex = gTeddySkeleton->pJoints[i].pParentIndex;
 
-	//	// It is the root
-	//	if (pParentIndex == -1)
-	//		continue;
+		// It is the root
+		if (pParentIndex == -1)
+			continue;
 
-	//	else
-	//	{
-	//		// Get the line between parent to child
-	//		XMFLOAT3 pChildPosition = XMFLOAT3(teddySkeleton->pJoints[i].pPosition.x, teddySkeleton->pJoints[i].pPosition.y, teddySkeleton->pJoints[i].pPosition.z);
-	//		XMFLOAT3 pParentPosition = XMFLOAT3(teddySkeleton->pJoints[pParentIndex].pPosition.x, teddySkeleton->pJoints[pParentIndex].pPosition.y, teddySkeleton->pJoints[pParentIndex].pPosition.z);
+		else
+		{
+			// Get the line between parent to child
+			XMFLOAT3 pChildPosition = XMFLOAT3(gTeddySkeleton->pJoints[i].pPosition.x, gTeddySkeleton->pJoints[i].pPosition.y, gTeddySkeleton->pJoints[i].pPosition.z);
+			XMFLOAT3 pParentPosition = XMFLOAT3(gTeddySkeleton->pJoints[pParentIndex].pPosition.x, gTeddySkeleton->pJoints[pParentIndex].pPosition.y, gTeddySkeleton->pJoints[pParentIndex].pPosition.z);
 
-	//		// Add the line to the bone_debugRenderer
-	//		teddy_bone_debugRenderer.add_debug_line(pChildPosition, pParentPosition, XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
-	//	}
-	//}
+			// Add the line to the bone_debugRenderer
+			teddy_bone_debugRenderer.add_debug_line(pChildPosition, pParentPosition, XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+		}
+	}
 
-	//// Push cpu to gpu
-	//teddy_bone_debugRenderer.push_to_gpu(d3d11DevCon);
+	// Push cpu to gpu
+	teddy_bone_debugRenderer.push_to_gpu(d3d11DevCon);
+
+	// Create the vertex buffer
+	D3D11_BUFFER_DESC teddy_vertexBufferDesc;
+	ZeroMemory(&teddy_vertexBufferDesc, sizeof(teddy_vertexBufferDesc));
+
+	int teddy_vertices_size = gTeddySkeleton->pMesh.pVertices.size();
+	teddy_vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	teddy_vertexBufferDesc.ByteWidth = sizeof(Mesh_Vertex) * teddy_vertices_size;
+	teddy_vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	teddy_vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	teddy_vertexBufferDesc.MiscFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA teddy_vertexBufferData;
+	ZeroMemory(&teddy_vertexBufferData, sizeof(teddy_vertexBufferData));
+
+	teddy_vertexBufferData.pSysMem = &gTeddySkeleton->pMesh.pVertices[0];
+	hr = d3d11Device->CreateBuffer(&teddy_vertexBufferDesc, &teddy_vertexBufferData, &gTeddyModel.pVertexBuffer);
+
+	// Create the Input Layout
+	// Layout for describing the triangle
+	D3D11_INPUT_ELEMENT_DESC teddy_layout[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+	UINT teddy_numElements = ARRAYSIZE(teddy_layout);
+
+	hr = d3d11Device->CreateInputLayout(teddy_layout, teddy_numElements, gTeddyModel.pVS_Buffer->GetBufferPointer(), gTeddyModel.pVS_Buffer->GetBufferSize(), &gTeddyModel.pvertLayout);
+
+	//Create the buffer to send to the cbuffer in effect file
+	D3D11_BUFFER_DESC teddy_cbbd;
+	ZeroMemory(&teddy_cbbd, sizeof(D3D11_BUFFER_DESC));
+
+	teddy_cbbd.Usage = D3D11_USAGE_DEFAULT;
+	teddy_cbbd.ByteWidth = sizeof(cbPerObject);
+	teddy_cbbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	teddy_cbbd.CPUAccessFlags = 0;
+	teddy_cbbd.MiscFlags = 0;
+
+	hr = d3d11Device->CreateBuffer(&teddy_cbbd, NULL, &cbPerObjectBuffer);
 
 #pragma endregion
 
@@ -469,7 +522,7 @@ void Init_and_Inter::UpdateScene(double time, User_Input &_input)
 	Rotation = XMMatrixRotationAxis(rotyaxis, 0);
 
 	// Set Teddy's world space matrix
-	teddyWorld = XMMatrixIdentity();
+	teddyWorld = Rotation * Scale;
 
 	//Update the colors of our scene
 	/*red += colormodr * 0.00005f;
@@ -531,15 +584,6 @@ void Init_and_Inter::DrawScene()
 	////Draw the second cube
 	//d3d11DevCon->DrawIndexed(36, 0, 0);
 
-	// Set the WVP matrix and send it to the constant buffer in hlsl file
-	//WVP = cube2World * camView * camProjection;
-	//cbPerObj.WVP = XMMatrixTranspose(WVP);
-	//d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
-	//d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
-
-	//Draw the mage model mesh
-	//d3d11DevCon->Draw(gMageSkeleton->pMesh.pPolygon.size(), 0);
-
 	// Setup the WVP for the mage
 	WVP = mageWorld * camView * camProjection;
 	cbPerObj.WVP = XMMatrixTranspose(WVP);
@@ -559,10 +603,65 @@ void Init_and_Inter::DrawScene()
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 
 	// Draw the teddy_joint_DebugRenderer Lines
-	//teddy_joint_debugRenderer.RenderLines();
+	teddy_joint_debugRenderer.RenderLines();
 
 	// Draw the teddy_bone_debugRenderer Lines
-	//teddy_bone_debugRenderer.RenderLines();
+	teddy_bone_debugRenderer.RenderLines();
+
+#pragma region Meshes
+
+#pragma region Mage Mesh
+
+	// Set new Vertex and Pixel Shaders
+	d3d11DevCon->VSSetShader(gMageModel.pVS, 0, 0);
+	d3d11DevCon->PSSetShader(gMageModel.pPS, 0, 0);
+
+	//Set the new vertex buffer
+	stride = sizeof(Mesh_Vertex);
+	offset = 0;
+	d3d11DevCon->IASetVertexBuffers(0, 1, &gMageModel.pVertexBuffer, &stride, &offset);
+
+	//Set the Input Layout
+	d3d11DevCon->IASetInputLayout(gMageModel.pvertLayout);
+
+	// Set the WVP matrix and send it to the constant buffer in hlsl file
+	WVP = mageWorld * camView * camProjection;
+	cbPerObj.WVP = XMMatrixTranspose(WVP);
+	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
+	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
+
+	//Draw the mage model mesh
+	//d3d11DevCon->Draw(gMageSkeleton->pMesh.pVertices.size(), 0);
+
+#pragma endregion
+
+#pragma region Teddy Mesh
+
+	// Set new Vertex and Pixel Shaders
+	d3d11DevCon->VSSetShader(gTeddyModel.pVS, 0, 0);
+	d3d11DevCon->PSSetShader(gTeddyModel.pPS, 0, 0);
+
+	//Set the new vertex buffer
+	stride = sizeof(Mesh_Vertex);
+	offset = 0;
+	d3d11DevCon->IASetVertexBuffers(0, 1, &gTeddyModel.pVertexBuffer, &stride, &offset);
+
+	//Set the Input Layout
+	d3d11DevCon->IASetInputLayout(gTeddyModel.pvertLayout);
+
+	// Set the WVP matrix and send it to the constant buffer in hlsl file
+	WVP = teddyWorld * camView * camProjection;
+	cbPerObj.WVP = XMMatrixTranspose(WVP);
+	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
+	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
+
+	//Draw the mage model mesh
+	d3d11DevCon->Draw(gTeddySkeleton->pMesh.pVertices.size(), 0);
+
+#pragma endregion
+
+#pragma endregion
+
 
 	// Present the backbuffer to the screen
 	SwapChain->Present(0, 0);
