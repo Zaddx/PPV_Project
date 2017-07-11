@@ -46,6 +46,17 @@ struct Square
 	ID3D11InputLayout* vertLayout;
 };
 
+struct Model
+{
+	ID3D11Buffer* pVertexBuffer;
+	ID3D11Buffer* pIndexBuffer;
+	ID3D11VertexShader* pVS;
+	ID3D11PixelShader* pPS;
+	ID3D10Blob* pVS_Buffer;
+	ID3D10Blob* pPS_Buffer;
+	ID3D11InputLayout* pvertLayout;
+};
+
 struct cbPerObject
 {
 	DirectX::XMMATRIX  WVP;

@@ -161,12 +161,17 @@ private:
 	Debug_Renderer teddy_joint_debugRenderer = Debug_Renderer();
 	Debug_Renderer teddy_bone_debugRenderer = Debug_Renderer();
 
-
 	// User_Input object
 	User_Input input;
 
 	// FBX_Executable instance
 	FBX_EXECUTABLE fbx_Exec;
+
+	// Skeleton Globals
+	Skeleton* gMageSkeleton;
+
+	// Model Globals
+	Model pMageModel;
 
 public:
 

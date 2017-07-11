@@ -9,6 +9,7 @@ namespace FBXLibrary
 	{
 	private:
 		Skeleton gSkeleton;
+		Mesh gMesh;
 	public:
 		FBX_Functions(void);
 		// TODO: add your methods here.

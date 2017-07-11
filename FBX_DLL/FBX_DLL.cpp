@@ -71,9 +71,9 @@ namespace FBXLibrary
 
 			//if( gVerbose ) DisplayHierarchy(lScene);
 
-			//FBXSDK_printf("\n\n------------\nNode Content\n------------\n\n");
+			FBXSDK_printf("\n\n------------\nNode Content\n------------\n\n");
 
-			//if( gVerbose ) DisplayContent(lScene);
+			if (gVerbose) DisplayContent(lScene);
 
 			FBXSDK_printf("\n\n----\nPose\n----\n\n");
 
@@ -607,9 +607,9 @@ namespace FBXLibrary
 				//    DisplaySkeleton(pNode);
 				//    break;
 
-				case FbxNodeAttribute::eMesh:      
-				    DisplayMesh(pNode);
-				    break;
+			case FbxNodeAttribute::eMesh:
+				DisplayMesh(pNode);
+				break;
 
 				//case FbxNodeAttribute::eNurbs:      
 				//    DisplayNurb(pNode);
@@ -1036,6 +1036,10 @@ namespace FBXLibrary
 		int vertexId = 0;
 		for (i = 0; i < lPolygonCount; i++)
 		{
+			// A temporary mesh polygon that will be filled out
+			// and later pushed into the mesh skeleton
+			Mesh_Polygon lTempPolygon;
+
 			DisplayInt("        Polygon ", i);
 			int l;
 
@@ -1063,9 +1067,14 @@ namespace FBXLibrary
 
 			for (j = 0; j < lPolygonSize; j++)
 			{
+				// A temporary mesh vertex that will be filled out
+				// and later pushed into the mesh polygon
+				Mesh_Vertex lTempVertex;
+
 				int lControlPointIndex = pMesh->GetPolygonVertex(i, j);
 
 				Display3DVector("            Coordinates: ", lControlPoints[lControlPointIndex]);
+				lTempVertex.pPosition = DirectX::XMFLOAT4(lControlPoints[lControlPointIndex][0], lControlPoints[lControlPointIndex][1], lControlPoints[lControlPointIndex][2], lControlPoints[lControlPointIndex][3]);
 
 				for (l = 0; l < pMesh->GetElementVertexColorCount(); l++)
 				{
@@ -1131,14 +1140,18 @@ namespace FBXLibrary
 						switch (leUV->GetReferenceMode())
 						{
 						case FbxGeometryElement::eDirect:
+						{
 							Display2DVector(header, leUV->GetDirectArray().GetAt(lControlPointIndex));
+							lTempVertex.pUV = DirectX::XMFLOAT2(leUV->GetDirectArray().GetAt(lControlPointIndex)[0], leUV->GetDirectArray().GetAt(lControlPointIndex)[1]);
 							break;
+						}
 						case FbxGeometryElement::eIndexToDirect:
 						{
 							int id = leUV->GetIndexArray().GetAt(lControlPointIndex);
 							Display2DVector(header, leUV->GetDirectArray().GetAt(id));
+							lTempVertex.pUV = DirectX::XMFLOAT2(leUV->GetDirectArray().GetAt(id)[0], leUV->GetDirectArray().GetAt(id)[1]);
+							break;
 						}
-						break;
 						default:
 							break; // other reference modes not shown here!
 						}
@@ -1153,8 +1166,9 @@ namespace FBXLibrary
 						case FbxGeometryElement::eIndexToDirect:
 						{
 							Display2DVector(header, leUV->GetDirectArray().GetAt(lTextureUVIndex));
+							lTempVertex.pUV = DirectX::XMFLOAT2(leUV->GetDirectArray().GetAt(lTextureUVIndex)[0], leUV->GetDirectArray().GetAt(lTextureUVIndex)[1]);
+							break;
 						}
-						break;
 						default:
 							break; // other reference modes not shown here!
 						}
@@ -1163,7 +1177,7 @@ namespace FBXLibrary
 
 					case FbxGeometryElement::eByPolygon: // doesn't make much sense for UVs
 					case FbxGeometryElement::eAllSame:   // doesn't make much sense for UVs
-					case FbxGeometryElement::eNone:       // doesn't make much sense for UVs
+					case FbxGeometryElement::eNone:      // doesn't make much sense for UVs
 						break;
 					}
 				}
@@ -1177,14 +1191,18 @@ namespace FBXLibrary
 						switch (leNormal->GetReferenceMode())
 						{
 						case FbxGeometryElement::eDirect:
+						{
 							Display3DVector(header, leNormal->GetDirectArray().GetAt(vertexId));
+							lTempVertex.pNormal = DirectX::XMFLOAT3(leNormal->GetDirectArray().GetAt(vertexId)[0], leNormal->GetDirectArray().GetAt(vertexId)[1], leNormal->GetDirectArray().GetAt(vertexId)[2]);
 							break;
+						}
 						case FbxGeometryElement::eIndexToDirect:
 						{
 							int id = leNormal->GetIndexArray().GetAt(vertexId);
 							Display3DVector(header, leNormal->GetDirectArray().GetAt(id));
+							lTempVertex.pNormal = DirectX::XMFLOAT3(leNormal->GetDirectArray().GetAt(id)[0], leNormal->GetDirectArray().GetAt(id)[1], leNormal->GetDirectArray().GetAt(id)[2]);
+							break;
 						}
-						break;
 						default:
 							break; // other reference modes not shown here!
 						}
@@ -1240,9 +1258,19 @@ namespace FBXLibrary
 					}
 				}
 				vertexId++;
+
+				// Pushback each vertex into the polygon
+				lTempPolygon.pVertices.push_back(lTempVertex);
+
 			} // for polygonSize
+
+			// Pushback each polygon mesh into the overall mesh
+			gMesh.pPolygon.push_back(lTempPolygon);
+
 		} // for polygonCount
 
+		// Update the skeletons mesh to the gMesh
+		gSkeleton.pMesh = gMesh;
 
 		  //check visibility for the edges of the mesh
 		for (int l = 0; l < pMesh->GetElementVisibilityCount(); ++l)
@@ -1274,13 +1302,13 @@ namespace FBXLibrary
 		int lLayeredTextureCount = pProperty.GetSrcObjectCount<FbxLayeredTexture>();
 		if (lLayeredTextureCount > 0)
 		{
-			for (int j = 0; j<lLayeredTextureCount; ++j)
+			for (int j = 0; j < lLayeredTextureCount; ++j)
 			{
 				FbxLayeredTexture *lLayeredTexture = pProperty.GetSrcObject<FbxLayeredTexture>(j);
 				int lNbTextures = lLayeredTexture->GetSrcObjectCount<FbxTexture>();
 				pConnectionString += " Texture ";
 
-				for (int k = 0; k<lNbTextures; ++k)
+				for (int k = 0; k < lNbTextures; ++k)
 				{
 					//lConnectionString += k;
 					pConnectionString += "\"";
@@ -1305,7 +1333,7 @@ namespace FBXLibrary
 				pConnectionString += " Texture ";
 				pConnectionString += " ";
 
-				for (int j = 0; j<lNbTextures; ++j)
+				for (int j = 0; j < lNbTextures; ++j)
 				{
 					FbxTexture* lTexture = pProperty.GetSrcObject<FbxTexture>(j);
 					if (lTexture)
@@ -1613,7 +1641,7 @@ namespace FBXLibrary
 					const FbxBindingTable* lTable = lImplementation->GetRootTable();
 					size_t lEntryNum = lTable->GetEntryCount();
 
-					for (int i = 0; i <(int)lEntryNum; ++i)
+					for (int i = 0; i < (int)lEntryNum; ++i)
 					{
 						const FbxBindingTableEntry& lEntry = lTable->GetEntry(i);
 						const char* lEntrySrcType = lEntry.GetEntryType(true);
@@ -1643,17 +1671,17 @@ namespace FBXLibrary
 							if (lFbxProp.GetSrcObjectCount<FbxTexture>() > 0)
 							{
 								//do what you want with the textures
-								for (int j = 0; j<lFbxProp.GetSrcObjectCount<FbxFileTexture>(); ++j)
+								for (int j = 0; j < lFbxProp.GetSrcObjectCount<FbxFileTexture>(); ++j)
 								{
 									FbxFileTexture *lTex = lFbxProp.GetSrcObject<FbxFileTexture>(j);
 									FBXSDK_printf("           File Texture: %s\n", lTex->GetFileName());
 								}
-								for (int j = 0; j<lFbxProp.GetSrcObjectCount<FbxLayeredTexture>(); ++j)
+								for (int j = 0; j < lFbxProp.GetSrcObjectCount<FbxLayeredTexture>(); ++j)
 								{
 									FbxLayeredTexture *lTex = lFbxProp.GetSrcObject<FbxLayeredTexture>(j);
 									FBXSDK_printf("        Layered Texture: %s\n", lTex->GetName());
 								}
-								for (int j = 0; j<lFbxProp.GetSrcObjectCount<FbxProceduralTexture>(); ++j)
+								for (int j = 0; j < lFbxProp.GetSrcObjectCount<FbxProceduralTexture>(); ++j)
 								{
 									FbxProceduralTexture *lTex = lFbxProp.GetSrcObject<FbxProceduralTexture>(j);
 									FBXSDK_printf("     Procedural Texture: %s\n", lTex->GetName());
@@ -1720,7 +1748,7 @@ namespace FBXLibrary
 								else if (FbxDouble4x4DT == lFbxType)
 								{
 									FbxDouble4x4 lDouble44 = lFbxProp.Get<FbxDouble4x4>();
-									for (int j = 0; j<4; ++j)
+									for (int j = 0; j < 4; ++j)
 									{
 
 										FbxVector4 lVect;
@@ -1846,7 +1874,7 @@ namespace FBXLibrary
 				{
 					DisplayInt("    Layered Texture: ", j);
 					int lNbTextures = lLayeredTexture->GetSrcObjectCount<FbxTexture>();
-					for (int k = 0; k<lNbTextures; ++k)
+					for (int k = 0; k < lNbTextures; ++k)
 					{
 						FbxTexture* lTexture = lLayeredTexture->GetSrcObject<FbxTexture>(k);
 						if (lTexture)
