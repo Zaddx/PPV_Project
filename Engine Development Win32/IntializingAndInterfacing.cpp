@@ -681,7 +681,7 @@ void Init_and_Inter::DrawScene()
 #pragma endregion
 
 	// Present the backbuffer to the screen
-	SwapChain->Present(0, 0);
+	SwapChain->Present(0, 0); 
 }
 
 void Init_and_Inter::UpdateCamera()
