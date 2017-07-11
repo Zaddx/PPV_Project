@@ -155,14 +155,14 @@ bool Init_and_Inter::InitScene(User_Input &_input)
 	//Create the vertex buffer
 	Vertex v[] =
 	{
-		Vertex(-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f),
-		Vertex(-1.0f, +1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f),
-		Vertex(+1.0f, +1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f),
-		Vertex(+1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f),
-		Vertex(-1.0f, -1.0f, +1.0f, 0.0f, 1.0f, 1.0f, 1.0f),
-		Vertex(-1.0f, +1.0f, +1.0f, 1.0f, 1.0f, 1.0f, 1.0f),
-		Vertex(+1.0f, +1.0f, +1.0f, 1.0f, 0.0f, 1.0f, 1.0f),
-		Vertex(+1.0f, -1.0f, +1.0f, 1.0f, 0.0f, 0.0f, 1.0f),
+		Vertex(-10.0f, 0.0f, -10.0f, 1.0f, 0.0f, 0.0f, 1.0f),
+		Vertex(-10.0f, 0.0f, -10.0f, 0.0f, 1.0f, 0.0f, 1.0f),
+		Vertex(+10.0f, 0.0f, -10.0f, 0.0f, 0.0f, 1.0f, 1.0f),
+		Vertex(+10.0f, 0.0f, -10.0f, 1.0f, 1.0f, 0.0f, 1.0f),
+		Vertex(-10.0f, 0.0f, +10.0f, 0.0f, 1.0f, 1.0f, 1.0f),
+		Vertex(-10.0f, 0.0f, +10.0f, 1.0f, 1.0f, 1.0f, 1.0f),
+		Vertex(+10.0f, 0.0f, +10.0f, 1.0f, 0.0f, 1.0f, 1.0f),
+		Vertex(+10.0f, 0.0f, +10.0f, 1.0f, 0.0f, 0.0f, 1.0f),
 	};
 
 	DWORD indices[] = {
@@ -498,7 +498,8 @@ void Init_and_Inter::UpdateScene(double time, User_Input &_input)
 	Translation = XMMatrixTranslation(0.0f, 0.0f, 4.0f);
 
 	//Set cube1's world space using the transformations
-	cube1World = Translation * Rotation * input.Rotationx * input.Rotationz;
+	//cube1World = Translation * Rotation * input.Rotationx * input.Rotationz;
+	cube1World = XMMatrixIdentity();
 
 	//Reset cube2World
 	cube2World = XMMatrixIdentity();
@@ -568,13 +569,13 @@ void Init_and_Inter::DrawScene()
 	d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	//Set the WVP matrix and send it to the constant buffer in effect file
-	//WVP = cube1World * camView * camProjection;
-	//cbPerObj.WVP = XMMatrixTranspose(WVP);
-	//d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
-	//d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
+	WVP = cube1World * camView * camProjection;
+	cbPerObj.WVP = XMMatrixTranspose(WVP);
+	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
+	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 
-	////Draw the first cube
-	//d3d11DevCon->DrawIndexed(36, 0, 0);
+	//Draw the first cube
+	d3d11DevCon->DrawIndexed(36, 0, 0);
 
 	//WVP = cube2World * camView * camProjection;
 	//cbPerObj.WVP = XMMatrixTranspose(WVP);
