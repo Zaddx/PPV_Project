@@ -832,6 +832,24 @@ void User_Input::DetectInput(double time, Init_and_Inter& _initializer)
 		mouseLastState = mouseCurrState;
 	}
 
+	if (keyboardState[DIK_LEFTARROW] && gKeyframeIndex != 0)
+		gKeyframeIndex--;
+
+	if (keyboardState[DIK_RIGHTARROW])
+		gKeyframeIndex++;
+
+	if (keyboardState[DIK_F1] && !gAnimationPlaying)
+	{
+		gAnimationTweening = false;
+		gAnimationPlaying = true;
+	}
+
+	if (keyboardState[DIK_F2] && !gAnimationTweening)
+	{
+		gAnimationTweening = true;
+		gAnimationPlaying = false;
+	}
+
 	mouseLastState = mouseCurrState;
 
 	_initializer.UpdateCamera();

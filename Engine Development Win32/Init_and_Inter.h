@@ -74,6 +74,11 @@ public:
 	float camYaw = 0.0f;
 	float camPitch = 0.0f;
 
+	// Variables for animation keypresses
+	int gKeyframeIndex = 0;
+	bool gAnimationPlaying = true;
+	bool gAnimationTweening = false;
+
 	bool InitDirectInput(HINSTANCE hInstance, HWND hwnd);
 	void DetectInput(double time, Init_and_Inter& _initializer);
 };
