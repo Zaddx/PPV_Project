@@ -6,6 +6,7 @@
 #include <DirectXColors.h>
 #include <d3dcompiler.h>
 #include <dinput.h>
+#include <iostream>
 
 // Headers
 #include "Structures.h"
@@ -49,15 +50,8 @@ class User_Input
 private:
 
 	HRESULT hr;
-	HWND hWnd;
 
 public:
-
-	IDirectInputDevice8* DIKeyboard;
-	IDirectInputDevice8* DIMouse;
-
-	DIMOUSESTATE mouseLastState;
-	LPDIRECTINPUT8 DirectInput;
 
 	float rotx = 0;
 	float rotz = 0;
@@ -79,8 +73,13 @@ public:
 	bool gAnimationPlaying = true;
 	bool gAnimationTweening = false;
 
-	bool InitDirectInput(HINSTANCE hInstance, HWND hwnd);
-	void DetectInput(double time, Init_and_Inter& _initializer);
+	// Variables for camera movement (none direct input way)
+	POINT gLastFrameCursorPos;
+
+	float m_viewSmoothing = 0.5f;
+	float m_viewSensitivity = 0.65f;
+
+	void DetectInput(double time, Init_and_Inter& _initializer, HWND hWnd);
 };
 
 class Timer

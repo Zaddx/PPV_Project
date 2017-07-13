@@ -59,7 +59,7 @@ int messageloop()
 			_timer.frameTime = _timer.GetFrameTime();
 
 			// Check for user input
-			_input.DetectInput(_timer.frameTime, _initializer);
+			_input.DetectInput(_timer.frameTime, _initializer, hWnd);
 
 			// Run graphics code
 			_initializer.UpdateScene(_timer.frameTime, _input);
@@ -104,12 +104,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	{
 		MessageBox(0, L"Direct3D Initialization - Failed", L"Error", MB_OK);
 		return 0;
-	}
-
-	if (!_input.InitDirectInput(hInstance, hWnd))
-	{
-		MessageBox(0, L"Direct Input Initialization - Failed",L"Error", MB_OK);
-		return false;
 	}
 
 	if (!_initializer.InitScene(_input))    //Initialize our scene

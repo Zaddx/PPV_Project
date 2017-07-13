@@ -122,11 +122,6 @@ void Init_and_Inter::ReleaseObjects()
 	gMageModel.pVS_Buffer->Release();
 	gMageModel.pPS_Buffer->Release();
 	gMageModel.pvertLayout->Release();
-
-	// Release the User_Input stuff
-	input.DIKeyboard->Unacquire();
-	input.DIMouse->Unacquire();
-	input.DirectInput->Release();
 }
 
 bool Init_and_Inter::InitScene(User_Input &_input)
@@ -681,7 +676,7 @@ void Init_and_Inter::DrawScene()
 #pragma endregion
 
 	// Present the backbuffer to the screen
-	SwapChain->Present(0, 0); 
+	SwapChain->Present(0, 0);
 }
 
 void Init_and_Inter::UpdateCamera()
@@ -766,91 +761,112 @@ void Debug_Renderer::ChangeColor(XMFLOAT4 color)
 		debugRendererCPU[i].color = color;
 }
 
-bool User_Input::InitDirectInput(HINSTANCE hInstance, HWND hwnd)
-{
-	hWnd = hwnd;
-	hr = DirectInput8Create(hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&DirectInput, NULL);
-	hr = DirectInput->CreateDevice(GUID_SysKeyboard, &DIKeyboard, NULL);
-	hr = DirectInput->CreateDevice(GUID_SysMouse, &DIMouse, NULL);
-	hr = DIKeyboard->SetDataFormat(&c_dfDIKeyboard);
-	hr = DIKeyboard->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
-	hr = DIMouse->SetDataFormat(&c_dfDIMouse);
-	hr = DIMouse->SetCooperativeLevel(hwnd, DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND);
-
-	return true;
-}
-
-void User_Input::DetectInput(double time, Init_and_Inter& _initializer)
+void User_Input::DetectInput(double time, Init_and_Inter& _initializer, HWND hWnd)
 {
 	moveLeftRight = 0.0f;
 	moveBackForward = 0.0f;
 	moveUpDown = 0.0f;
 
-	DIMOUSESTATE mouseCurrState;
+	float speed = 7.5f  * time;
 
-	BYTE keyboardState[256] = {};
+	// Get Async Key States
+	SHORT lWKeyState = GetAsyncKeyState(0x57);		  // W Key
+	SHORT lAKeyState = GetAsyncKeyState(0x41);		  // A Key
+	SHORT lSKeyState = GetAsyncKeyState(0x53);		  // S Key
+	SHORT lDKeyState = GetAsyncKeyState(0x44);		  // D Key
+	SHORT lEscKeyState = GetAsyncKeyState(VK_ESCAPE);	// ESC Key
+	SHORT lLeftCtrlKeyState = GetAsyncKeyState(VK_LCONTROL); // Left Control Key
+	SHORT lSpaceKeyState = GetAsyncKeyState(VK_SPACE);// Space Key
+	SHORT lRightClickKeyState = GetAsyncKeyState(VK_RBUTTON); // Right Click
+	SHORT lLeftArrowKeyState = GetAsyncKeyState(DIK_LEFTARROW); // Left Arrow
+	SHORT lRightArrowKeyState = GetAsyncKeyState(DIK_RIGHTARROW); // Right Arrow
+	SHORT lF1KeyState = GetAsyncKeyState(VK_F1);	  // F1 Key
+	SHORT lF2KeyState = GetAsyncKeyState(VK_F2);	  // F2 Key
 
-	DIKeyboard->Acquire();
-	DIMouse->Acquire();
+	if ((1 << 15) & lEscKeyState)
+		PostMessage(hWnd, WM_CLOSE, 0, 0);
 
-	DIMouse->GetDeviceState(sizeof(DIMOUSESTATE), &mouseCurrState);
-
-	DIKeyboard->GetDeviceState(sizeof(keyboardState), (LPVOID)&keyboardState);
-
-	float speed = 5.0f  * time;
-
-	if (keyboardState[DIK_ESCAPE] & 0x80)
-		PostMessage(hWnd, WM_DESTROY, 0, 0);
-
-	if (keyboardState[DIK_A] & 0x80)
-		moveLeftRight -= speed;
-
-	if (keyboardState[DIK_D] & 0x80)
-		moveLeftRight += speed;
-
-	if (keyboardState[DIK_W] & 0x80)
+	if ((1 << 15) & lWKeyState)
 		moveBackForward += speed;
 
-	if (keyboardState[DIK_S] & 0x80)
+	if ((1 << 15) & lAKeyState)
+		moveLeftRight -= speed;
+
+	if ((1 << 15) & lSKeyState)
 		moveBackForward -= speed;
 
-	if (keyboardState[DIK_SPACE] & 0x80)
+	if ((1 << 15) & lDKeyState)
+		moveLeftRight += speed;
+
+	if ((1 << 15) & lSpaceKeyState)
 		moveUpDown += speed;
 
-	if (keyboardState[DIK_LCONTROL] & 0x80)
+	if ((1 << 15) & lLeftCtrlKeyState)
 		moveUpDown -= speed;
 
-	if ((mouseCurrState.lX != mouseLastState.lX) || (mouseCurrState.lY != mouseLastState.lY))
+	// Get the current cursor position
+	POINT lCurrentFrameCursorPos;
+	ZeroMemory(&lCurrentFrameCursorPos, sizeof(lCurrentFrameCursorPos));
+	int lResult = GetCursorPos(&lCurrentFrameCursorPos);
+
+	int deltaX = lCurrentFrameCursorPos.x - gLastFrameCursorPos.x;
+	int deltaY = lCurrentFrameCursorPos.y - gLastFrameCursorPos.y;
+
+	if ((1 << 15) & lRightClickKeyState)
 	{
-		//camYaw += mouseLastState.lX * 0.001f;
-		camYaw += mouseLastState.lX * speed;
+		if (lResult)
+		{
+			if ((lCurrentFrameCursorPos.x != gLastFrameCursorPos.x) || (lCurrentFrameCursorPos.y != gLastFrameCursorPos.y))
+			{
+				camYaw += deltaX * speed;
 
+				camPitch += deltaY * speed;
 
-		//camPitch += mouseCurrState.lY * 0.001f;
-		camPitch += mouseCurrState.lY * speed;
-
-		mouseLastState = mouseCurrState;
+				gLastFrameCursorPos = lCurrentFrameCursorPos;
+			}
+		}
 	}
 
-	if (keyboardState[DIK_LEFTARROW] && gKeyframeIndex != 0)
+	// Variable for debounce purposes
+	bool canUpdateIndex = true;
+	int lDebounce = 0;
+
+	// Add message boxes for each keypress for debug purposes
+	if ((1 << 15) & lLeftArrowKeyState && gKeyframeIndex != 0 && canUpdateIndex)
+	{
 		gKeyframeIndex--;
 
-	if (keyboardState[DIK_RIGHTARROW])
+		std::cout << "KeyFrameIndex: " << gKeyframeIndex << " \n";
+	}
+
+	if ((1 << 15) & lRightArrowKeyState && canUpdateIndex)
+	{
 		gKeyframeIndex++;
 
-	if (keyboardState[DIK_F1] && !gAnimationPlaying)
+		std::cout << "KeyFrameIndex: " << gKeyframeIndex << " \n";
+	}
+
+	if ((1 << 15) & lF1KeyState && !gAnimationPlaying)
 	{
 		gAnimationTweening = false;
 		gAnimationPlaying = true;
+
+		std::cout << "Animation Playing: " << gAnimationPlaying << " \n";
+		std::cout << "Animation Tweening: " << gAnimationTweening << " \n";
+
 	}
 
-	if (keyboardState[DIK_F2] && !gAnimationTweening)
+	if ((1 << 15) & lF2KeyState && !gAnimationTweening)
 	{
 		gAnimationTweening = true;
 		gAnimationPlaying = false;
+
+		std::cout << "Animation Playing: " << gAnimationPlaying << " \n";
+		std::cout << "Animation Tweening: " << gAnimationTweening << " \n";
 	}
 
-	mouseLastState = mouseCurrState;
+	//mouseLastState = mouseCurrState;
+	gLastFrameCursorPos = lCurrentFrameCursorPos;
 
 	_initializer.UpdateCamera();
 
