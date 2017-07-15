@@ -3,6 +3,13 @@
 #include <DirectXMath.h>
 #include <vector>
 
+struct Keyframe_Info
+{
+	DirectX::XMFLOAT3 pTranslation;		// Translation of keyframe
+	DirectX::XMFLOAT3 pRotation;		// Rotation of keyframe
+	DirectX::XMFLOAT3 pScale;			// Scale of keyframe
+};
+
 struct Joint
 {
 	DirectX::XMMATRIX pMatrix;
@@ -13,6 +20,9 @@ struct Joint
 
 	int pParentIndex;
 	std::string pName;
+
+	// Stuff for animation
+	std::vector<Keyframe_Info> pKeyframes;		// Each joint has it's own keyframes
 };
 
 // Dont really need bone structure since 
