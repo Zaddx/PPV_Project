@@ -55,6 +55,12 @@ namespace FBXLibrary
 		void DisplayLink(FbxGeometry* pGeometry);
 		void DisplayShape(FbxGeometry* pGeometry);
 		void DisplayCache(FbxGeometry* pGeometry);
+		void DisplayAnimation(FbxScene* pScene);
+		void DisplayAnimation(FbxAnimStack* pAnimStack, FbxNode* pNode, bool isSwitcher = false);
+		void DisplayAnimation(FbxAnimLayer* pAnimLayer, FbxNode* pNode, bool isSwitcher = false);
+		void DisplayChannels(FbxNode* pNode, FbxAnimLayer* pAnimLayer, bool isSwitcher);
+		void DisplayCurveKeys(FbxAnimCurve* pCurve);
+		void DisplayListCurveKeys(FbxAnimCurve* pCurve, FbxProperty* pProperty);
 
 		// Personal functions for looping through skeleton hierarchy
 		void ProcessSkeletonHierarchy(FbxNode* pRootNode);
