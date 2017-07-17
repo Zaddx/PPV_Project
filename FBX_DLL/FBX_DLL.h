@@ -10,6 +10,7 @@ namespace FBXLibrary
 	private:
 		Skeleton gSkeleton;
 		Mesh gMesh;
+
 	public:
 		FBX_Functions(void);
 		// TODO: add your methods here.
@@ -60,6 +61,7 @@ namespace FBXLibrary
 		void DisplayAnimation(FbxAnimLayer* pAnimLayer, FbxNode* pNode, bool isSwitcher = false);
 		void DisplayChannels(FbxNode* pNode, FbxAnimLayer* pAnimLayer, bool isSwitcher);
 		void DisplayCurveKeys(FbxAnimCurve* pCurve);
+		void DisplayCurveKeys(FbxAnimCurve* pCurve, Vertex_Part pVertex_Part, Vertex_Part_Data pVertex_Part_Data, int pJointIndex);
 		void DisplayListCurveKeys(FbxAnimCurve* pCurve, FbxProperty* pProperty);
 
 		// Personal functions for looping through skeleton hierarchy
@@ -71,5 +73,8 @@ namespace FBXLibrary
 
 		// Personal function to get the Skeleton
 		Skeleton* getSkeleton();
+
+		// Persoanl Function to construct vertices
+		void ConstructKeyFrames();
 	};
 }

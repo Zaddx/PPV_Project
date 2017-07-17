@@ -994,6 +994,8 @@ namespace FBXLibrary
 
 	Skeleton* FBX_Functions::getSkeleton()
 	{
+		// Construct Keyframes before giving skeleton
+		ConstructKeyFrames();
 		return &gSkeleton;
 	}
 
@@ -2329,312 +2331,322 @@ namespace FBXLibrary
 	void FBX_Functions::DisplayChannels(FbxNode* pNode, FbxAnimLayer* pAnimLayer, bool isSwitcher)
 	{
 		FbxAnimCurve* lAnimCurve = NULL;
+		std::string lNodeName = pNode->GetName();
 
+		int jointIndex = 0;
 		for (unsigned int i = 0; i < gSkeleton.pJoints.size(); i++)
 		{
-			if (gSkeleton.pJoints[i].pName == pNode->GetName())
+			if (gSkeleton.pJoints[i].pName == lNodeName)
 			{
-				// Create a keyframe info that will be filled out and passed into the joint
-				Keyframe_Info lKeyframe;
+				jointIndex = i;
+				break;
+			}
 
-				// Display general curves.
-				if (!isSwitcher)
-				{
-					lAnimCurve = pNode->LclTranslation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
-					if (lAnimCurve)
-					{
-						FBXSDK_printf("        TX\n");
-						DisplayCurveKeys(lAnimCurve);
-					}
-					lAnimCurve = pNode->LclTranslation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
-					if (lAnimCurve)
-					{
-						FBXSDK_printf("        TY\n");
-						DisplayCurveKeys(lAnimCurve);
-					}
-					lAnimCurve = pNode->LclTranslation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
-					if (lAnimCurve)
-					{
-						FBXSDK_printf("        TZ\n");
-						DisplayCurveKeys(lAnimCurve);
-					}
-
-					lAnimCurve = pNode->LclRotation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
-					if (lAnimCurve)
-					{
-						FBXSDK_printf("        RX\n");
-						DisplayCurveKeys(lAnimCurve);
-					}
-					lAnimCurve = pNode->LclRotation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
-					if (lAnimCurve)
-					{
-						FBXSDK_printf("        RY\n");
-						DisplayCurveKeys(lAnimCurve);
-					}
-					lAnimCurve = pNode->LclRotation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
-					if (lAnimCurve)
-					{
-						FBXSDK_printf("        RZ\n");
-						DisplayCurveKeys(lAnimCurve);
-					}
-
-					lAnimCurve = pNode->LclScaling.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
-					if (lAnimCurve)
-					{
-						FBXSDK_printf("        SX\n");
-						DisplayCurveKeys(lAnimCurve);
-					}
-					lAnimCurve = pNode->LclScaling.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
-					if (lAnimCurve)
-					{
-						FBXSDK_printf("        SY\n");
-						DisplayCurveKeys(lAnimCurve);
-					}
-					lAnimCurve = pNode->LclScaling.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
-					if (lAnimCurve)
-					{
-						FBXSDK_printf("        SZ\n");
-						DisplayCurveKeys(lAnimCurve);
-					}
-				}
-
-				// Display curves specific to a light or marker.
-				FbxNodeAttribute* lNodeAttribute = pNode->GetNodeAttribute();
-
-				if (lNodeAttribute)
-				{
-					lAnimCurve = lNodeAttribute->Color.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COLOR_RED);
-					if (lAnimCurve)
-					{
-						FBXSDK_printf("        Red\n");
-						DisplayCurveKeys(lAnimCurve);
-					}
-					lAnimCurve = lNodeAttribute->Color.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COLOR_GREEN);
-					if (lAnimCurve)
-					{
-						FBXSDK_printf("        Green\n");
-						DisplayCurveKeys(lAnimCurve);
-					}
-					lAnimCurve = lNodeAttribute->Color.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COLOR_BLUE);
-					if (lAnimCurve)
-					{
-						FBXSDK_printf("        Blue\n");
-						DisplayCurveKeys(lAnimCurve);
-					}
-
-					// Display curves specific to a light.
-					FbxLight* light = pNode->GetLight();
-					if (light)
-					{
-						lAnimCurve = light->Intensity.GetCurve(pAnimLayer);
-						if (lAnimCurve)
-						{
-							FBXSDK_printf("        Intensity\n");
-							DisplayCurveKeys(lAnimCurve);
-						}
-
-						lAnimCurve = light->OuterAngle.GetCurve(pAnimLayer);
-						if (lAnimCurve)
-						{
-							FBXSDK_printf("        Outer Angle\n");
-							DisplayCurveKeys(lAnimCurve);
-						}
-
-						lAnimCurve = light->Fog.GetCurve(pAnimLayer);
-						if (lAnimCurve)
-						{
-							FBXSDK_printf("        Fog\n");
-							DisplayCurveKeys(lAnimCurve);
-						}
-					}
-
-					// Display curves specific to a camera.
-					FbxCamera* camera = pNode->GetCamera();
-					if (camera)
-					{
-						lAnimCurve = camera->FieldOfView.GetCurve(pAnimLayer);
-						if (lAnimCurve)
-						{
-							FBXSDK_printf("        Field of View\n");
-							DisplayCurveKeys(lAnimCurve);
-						}
-
-						lAnimCurve = camera->FieldOfViewX.GetCurve(pAnimLayer);
-						if (lAnimCurve)
-						{
-							FBXSDK_printf("        Field of View X\n");
-							DisplayCurveKeys(lAnimCurve);
-						}
-
-						lAnimCurve = camera->FieldOfViewY.GetCurve(pAnimLayer);
-						if (lAnimCurve)
-						{
-							FBXSDK_printf("        Field of View Y\n");
-							DisplayCurveKeys(lAnimCurve);
-						}
-
-						lAnimCurve = camera->OpticalCenterX.GetCurve(pAnimLayer);
-						if (lAnimCurve)
-						{
-							FBXSDK_printf("        Optical Center X\n");
-							DisplayCurveKeys(lAnimCurve);
-						}
-
-						lAnimCurve = camera->OpticalCenterY.GetCurve(pAnimLayer);
-						if (lAnimCurve)
-						{
-							FBXSDK_printf("        Optical Center Y\n");
-							DisplayCurveKeys(lAnimCurve);
-						}
-
-						lAnimCurve = camera->Roll.GetCurve(pAnimLayer);
-						if (lAnimCurve)
-						{
-							FBXSDK_printf("        Roll\n");
-							DisplayCurveKeys(lAnimCurve);
-						}
-					}
-
-					// Display curves specific to a geometry.
-					if (lNodeAttribute->GetAttributeType() == FbxNodeAttribute::eMesh ||
-						lNodeAttribute->GetAttributeType() == FbxNodeAttribute::eNurbs ||
-						lNodeAttribute->GetAttributeType() == FbxNodeAttribute::ePatch)
-					{
-						FbxGeometry* lGeometry = (FbxGeometry*)lNodeAttribute;
-
-						int lBlendShapeDeformerCount = lGeometry->GetDeformerCount(FbxDeformer::eBlendShape);
-						for (int lBlendShapeIndex = 0; lBlendShapeIndex < lBlendShapeDeformerCount; ++lBlendShapeIndex)
-						{
-							FbxBlendShape* lBlendShape = (FbxBlendShape*)lGeometry->GetDeformer(lBlendShapeIndex, FbxDeformer::eBlendShape);
-
-							int lBlendShapeChannelCount = lBlendShape->GetBlendShapeChannelCount();
-							for (int lChannelIndex = 0; lChannelIndex < lBlendShapeChannelCount; ++lChannelIndex)
-							{
-								FbxBlendShapeChannel* lChannel = lBlendShape->GetBlendShapeChannel(lChannelIndex);
-								const char* lChannelName = lChannel->GetName();
-
-								lAnimCurve = lGeometry->GetShapeChannel(lBlendShapeIndex, lChannelIndex, pAnimLayer, true);
-								if (lAnimCurve)
-								{
-									FBXSDK_printf("        Shape %s\n", lChannelName);
-									DisplayCurveKeys(lAnimCurve);
-								}
-							}
-						}
-					}
-				}
-
-				// Display curves specific to properties
-				FbxProperty lProperty = pNode->GetFirstProperty();
-				while (lProperty.IsValid())
-				{
-					if (lProperty.GetFlag(FbxPropertyFlags::eUserDefined))
-					{
-						FbxString lFbxFCurveNodeName = lProperty.GetName();
-						FbxAnimCurveNode* lCurveNode = lProperty.GetCurveNode(pAnimLayer);
-
-						if (!lCurveNode) {
-							lProperty = pNode->GetNextProperty(lProperty);
-							continue;
-						}
-
-						FbxDataType lDataType = lProperty.GetPropertyDataType();
-						if (lDataType.GetType() == eFbxBool || lDataType.GetType() == eFbxDouble || lDataType.GetType() == eFbxFloat || lDataType.GetType() == eFbxInt)
-						{
-							FbxString lMessage;
-
-							lMessage = "        Property ";
-							lMessage += lProperty.GetName();
-							if (lProperty.GetLabel().GetLen() > 0)
-							{
-								lMessage += " (Label: ";
-								lMessage += lProperty.GetLabel();
-								lMessage += ")";
-							};
-
-							DisplayString(lMessage.Buffer());
-
-							for (int c = 0; c < lCurveNode->GetCurveCount(0U); c++)
-							{
-								lAnimCurve = lCurveNode->GetCurve(0U, c);
-								if (lAnimCurve)
-									DisplayCurveKeys(lAnimCurve);
-							}
-						}
-						else if (lDataType.GetType() == eFbxDouble3 || lDataType.GetType() == eFbxDouble4 || lDataType.Is(FbxColor3DT) || lDataType.Is(FbxColor4DT))
-						{
-							char* lComponentName1 = (lDataType.Is(FbxColor3DT) || lDataType.Is(FbxColor4DT)) ? (char*)FBXSDK_CURVENODE_COLOR_RED : (char*)"X";
-							char* lComponentName2 = (lDataType.Is(FbxColor3DT) || lDataType.Is(FbxColor4DT)) ? (char*)FBXSDK_CURVENODE_COLOR_GREEN : (char*)"Y";
-							char* lComponentName3 = (lDataType.Is(FbxColor3DT) || lDataType.Is(FbxColor4DT)) ? (char*)FBXSDK_CURVENODE_COLOR_BLUE : (char*)"Z";
-							FbxString      lMessage;
-
-							lMessage = "        Property ";
-							lMessage += lProperty.GetName();
-							if (lProperty.GetLabel().GetLen() > 0)
-							{
-								lMessage += " (Label: ";
-								lMessage += lProperty.GetLabel();
-								lMessage += ")";
-							}
-							DisplayString(lMessage.Buffer());
-
-							for (int c = 0; c < lCurveNode->GetCurveCount(0U); c++)
-							{
-								lAnimCurve = lCurveNode->GetCurve(0U, c);
-								if (lAnimCurve)
-								{
-									DisplayString("        Component ", lComponentName1);
-									DisplayCurveKeys(lAnimCurve);
-								}
-							}
-
-							for (int c = 0; c < lCurveNode->GetCurveCount(1U); c++)
-							{
-								lAnimCurve = lCurveNode->GetCurve(1U, c);
-								if (lAnimCurve)
-								{
-									DisplayString("        Component ", lComponentName2);
-									DisplayCurveKeys(lAnimCurve);
-								}
-							}
-
-							for (int c = 0; c < lCurveNode->GetCurveCount(2U); c++)
-							{
-								lAnimCurve = lCurveNode->GetCurve(2U, c);
-								if (lAnimCurve)
-								{
-									DisplayString("        Component ", lComponentName3);
-									DisplayCurveKeys(lAnimCurve);
-								}
-							}
-						}
-						else if (lDataType.GetType() == eFbxEnum)
-						{
-							FbxString lMessage;
-
-							lMessage = "        Property ";
-							lMessage += lProperty.GetName();
-							if (lProperty.GetLabel().GetLen() > 0)
-							{
-								lMessage += " (Label: ";
-								lMessage += lProperty.GetLabel();
-								lMessage += ")";
-							};
-							DisplayString(lMessage.Buffer());
-
-							for (int c = 0; c < lCurveNode->GetCurveCount(0U); c++)
-							{
-								lAnimCurve = lCurveNode->GetCurve(0U, c);
-								if (lAnimCurve)
-									DisplayListCurveKeys(lAnimCurve, &lProperty);
-							}
-						}
-					}
-
-					lProperty = pNode->GetNextProperty(lProperty);
-				} // while
+			// If it's not in the list make the index -1
+			// Make check where i create nodes
+			else
+			{
+				jointIndex = -1;
 			}
 		}
+		// Display general curves.
+		if (!isSwitcher)
+		{
+			lAnimCurve = pNode->LclTranslation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
+			if (lAnimCurve)
+			{
+				FBXSDK_printf("        TX\n");
+				//DisplayCurveKeys(lAnimCurve);
+				DisplayCurveKeys(lAnimCurve, Vertex_Part::TRANSLATION, Vertex_Part_Data::X, jointIndex);
+			}
+			lAnimCurve = pNode->LclTranslation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
+			if (lAnimCurve)
+			{
+				FBXSDK_printf("        TY\n");
+				DisplayCurveKeys(lAnimCurve, Vertex_Part::TRANSLATION, Vertex_Part_Data::Y, jointIndex);
+			}
+			lAnimCurve = pNode->LclTranslation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
+			if (lAnimCurve)
+			{
+				FBXSDK_printf("        TZ\n");
+				DisplayCurveKeys(lAnimCurve, Vertex_Part::TRANSLATION, Vertex_Part_Data::Z, jointIndex);
+			}
+
+			lAnimCurve = pNode->LclRotation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
+			if (lAnimCurve)
+			{
+				FBXSDK_printf("        RX\n");
+				DisplayCurveKeys(lAnimCurve, Vertex_Part::ROTATION, Vertex_Part_Data::X, jointIndex);
+			}
+			lAnimCurve = pNode->LclRotation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
+			if (lAnimCurve)
+			{
+				FBXSDK_printf("        RY\n");
+				DisplayCurveKeys(lAnimCurve, Vertex_Part::ROTATION, Vertex_Part_Data::Y, jointIndex);
+			}
+			lAnimCurve = pNode->LclRotation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
+			if (lAnimCurve)
+			{
+				FBXSDK_printf("        RZ\n");
+				DisplayCurveKeys(lAnimCurve, Vertex_Part::ROTATION, Vertex_Part_Data::Z, jointIndex);
+			}
+
+			lAnimCurve = pNode->LclScaling.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
+			if (lAnimCurve)
+			{
+				FBXSDK_printf("        SX\n");
+				DisplayCurveKeys(lAnimCurve, Vertex_Part::SCALE, Vertex_Part_Data::X, jointIndex);
+			}
+			lAnimCurve = pNode->LclScaling.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
+			if (lAnimCurve)
+			{
+				FBXSDK_printf("        SY\n");
+				DisplayCurveKeys(lAnimCurve, Vertex_Part::SCALE, Vertex_Part_Data::Y, jointIndex);
+			}
+			lAnimCurve = pNode->LclScaling.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
+			if (lAnimCurve)
+			{
+				FBXSDK_printf("        SZ\n");
+				DisplayCurveKeys(lAnimCurve, Vertex_Part::SCALE, Vertex_Part_Data::Z, jointIndex);
+			}
+		}
+
+		// Display curves specific to a light or marker.
+		FbxNodeAttribute* lNodeAttribute = pNode->GetNodeAttribute();
+
+		if (lNodeAttribute)
+		{
+			lAnimCurve = lNodeAttribute->Color.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COLOR_RED);
+			if (lAnimCurve)
+			{
+				FBXSDK_printf("        Red\n");
+				DisplayCurveKeys(lAnimCurve);
+			}
+			lAnimCurve = lNodeAttribute->Color.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COLOR_GREEN);
+			if (lAnimCurve)
+			{
+				FBXSDK_printf("        Green\n");
+				DisplayCurveKeys(lAnimCurve);
+			}
+			lAnimCurve = lNodeAttribute->Color.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COLOR_BLUE);
+			if (lAnimCurve)
+			{
+				FBXSDK_printf("        Blue\n");
+				DisplayCurveKeys(lAnimCurve);
+			}
+
+			// Display curves specific to a light.
+			FbxLight* light = pNode->GetLight();
+			if (light)
+			{
+				lAnimCurve = light->Intensity.GetCurve(pAnimLayer);
+				if (lAnimCurve)
+				{
+					FBXSDK_printf("        Intensity\n");
+					DisplayCurveKeys(lAnimCurve);
+				}
+
+				lAnimCurve = light->OuterAngle.GetCurve(pAnimLayer);
+				if (lAnimCurve)
+				{
+					FBXSDK_printf("        Outer Angle\n");
+					DisplayCurveKeys(lAnimCurve);
+				}
+
+				lAnimCurve = light->Fog.GetCurve(pAnimLayer);
+				if (lAnimCurve)
+				{
+					FBXSDK_printf("        Fog\n");
+					DisplayCurveKeys(lAnimCurve);
+				}
+			}
+
+			// Display curves specific to a camera.
+			FbxCamera* camera = pNode->GetCamera();
+			if (camera)
+			{
+				lAnimCurve = camera->FieldOfView.GetCurve(pAnimLayer);
+				if (lAnimCurve)
+				{
+					FBXSDK_printf("        Field of View\n");
+					DisplayCurveKeys(lAnimCurve);
+				}
+
+				lAnimCurve = camera->FieldOfViewX.GetCurve(pAnimLayer);
+				if (lAnimCurve)
+				{
+					FBXSDK_printf("        Field of View X\n");
+					DisplayCurveKeys(lAnimCurve);
+				}
+
+				lAnimCurve = camera->FieldOfViewY.GetCurve(pAnimLayer);
+				if (lAnimCurve)
+				{
+					FBXSDK_printf("        Field of View Y\n");
+					DisplayCurveKeys(lAnimCurve);
+				}
+
+				lAnimCurve = camera->OpticalCenterX.GetCurve(pAnimLayer);
+				if (lAnimCurve)
+				{
+					FBXSDK_printf("        Optical Center X\n");
+					DisplayCurveKeys(lAnimCurve);
+				}
+
+				lAnimCurve = camera->OpticalCenterY.GetCurve(pAnimLayer);
+				if (lAnimCurve)
+				{
+					FBXSDK_printf("        Optical Center Y\n");
+					DisplayCurveKeys(lAnimCurve);
+				}
+
+				lAnimCurve = camera->Roll.GetCurve(pAnimLayer);
+				if (lAnimCurve)
+				{
+					FBXSDK_printf("        Roll\n");
+					DisplayCurveKeys(lAnimCurve);
+				}
+			}
+
+			// Display curves specific to a geometry.
+			if (lNodeAttribute->GetAttributeType() == FbxNodeAttribute::eMesh ||
+				lNodeAttribute->GetAttributeType() == FbxNodeAttribute::eNurbs ||
+				lNodeAttribute->GetAttributeType() == FbxNodeAttribute::ePatch)
+			{
+				FbxGeometry* lGeometry = (FbxGeometry*)lNodeAttribute;
+
+				int lBlendShapeDeformerCount = lGeometry->GetDeformerCount(FbxDeformer::eBlendShape);
+				for (int lBlendShapeIndex = 0; lBlendShapeIndex < lBlendShapeDeformerCount; ++lBlendShapeIndex)
+				{
+					FbxBlendShape* lBlendShape = (FbxBlendShape*)lGeometry->GetDeformer(lBlendShapeIndex, FbxDeformer::eBlendShape);
+
+					int lBlendShapeChannelCount = lBlendShape->GetBlendShapeChannelCount();
+					for (int lChannelIndex = 0; lChannelIndex < lBlendShapeChannelCount; ++lChannelIndex)
+					{
+						FbxBlendShapeChannel* lChannel = lBlendShape->GetBlendShapeChannel(lChannelIndex);
+						const char* lChannelName = lChannel->GetName();
+
+						lAnimCurve = lGeometry->GetShapeChannel(lBlendShapeIndex, lChannelIndex, pAnimLayer, true);
+						if (lAnimCurve)
+						{
+							FBXSDK_printf("        Shape %s\n", lChannelName);
+							DisplayCurveKeys(lAnimCurve);
+						}
+					}
+				}
+			}
+		}
+
+		// Display curves specific to properties
+		FbxProperty lProperty = pNode->GetFirstProperty();
+		while (lProperty.IsValid())
+		{
+			if (lProperty.GetFlag(FbxPropertyFlags::eUserDefined))
+			{
+				FbxString lFbxFCurveNodeName = lProperty.GetName();
+				FbxAnimCurveNode* lCurveNode = lProperty.GetCurveNode(pAnimLayer);
+
+				if (!lCurveNode) {
+					lProperty = pNode->GetNextProperty(lProperty);
+					continue;
+				}
+
+				FbxDataType lDataType = lProperty.GetPropertyDataType();
+				if (lDataType.GetType() == eFbxBool || lDataType.GetType() == eFbxDouble || lDataType.GetType() == eFbxFloat || lDataType.GetType() == eFbxInt)
+				{
+					FbxString lMessage;
+
+					lMessage = "        Property ";
+					lMessage += lProperty.GetName();
+					if (lProperty.GetLabel().GetLen() > 0)
+					{
+						lMessage += " (Label: ";
+						lMessage += lProperty.GetLabel();
+						lMessage += ")";
+					};
+
+					DisplayString(lMessage.Buffer());
+
+					for (int c = 0; c < lCurveNode->GetCurveCount(0U); c++)
+					{
+						lAnimCurve = lCurveNode->GetCurve(0U, c);
+						if (lAnimCurve)
+							DisplayCurveKeys(lAnimCurve);
+					}
+				}
+				else if (lDataType.GetType() == eFbxDouble3 || lDataType.GetType() == eFbxDouble4 || lDataType.Is(FbxColor3DT) || lDataType.Is(FbxColor4DT))
+				{
+					char* lComponentName1 = (lDataType.Is(FbxColor3DT) || lDataType.Is(FbxColor4DT)) ? (char*)FBXSDK_CURVENODE_COLOR_RED : (char*)"X";
+					char* lComponentName2 = (lDataType.Is(FbxColor3DT) || lDataType.Is(FbxColor4DT)) ? (char*)FBXSDK_CURVENODE_COLOR_GREEN : (char*)"Y";
+					char* lComponentName3 = (lDataType.Is(FbxColor3DT) || lDataType.Is(FbxColor4DT)) ? (char*)FBXSDK_CURVENODE_COLOR_BLUE : (char*)"Z";
+					FbxString      lMessage;
+
+					lMessage = "        Property ";
+					lMessage += lProperty.GetName();
+					if (lProperty.GetLabel().GetLen() > 0)
+					{
+						lMessage += " (Label: ";
+						lMessage += lProperty.GetLabel();
+						lMessage += ")";
+					}
+					DisplayString(lMessage.Buffer());
+
+					for (int c = 0; c < lCurveNode->GetCurveCount(0U); c++)
+					{
+						lAnimCurve = lCurveNode->GetCurve(0U, c);
+						if (lAnimCurve)
+						{
+							DisplayString("        Component ", lComponentName1);
+							DisplayCurveKeys(lAnimCurve);
+						}
+					}
+
+					for (int c = 0; c < lCurveNode->GetCurveCount(1U); c++)
+					{
+						lAnimCurve = lCurveNode->GetCurve(1U, c);
+						if (lAnimCurve)
+						{
+							DisplayString("        Component ", lComponentName2);
+							DisplayCurveKeys(lAnimCurve);
+						}
+					}
+
+					for (int c = 0; c < lCurveNode->GetCurveCount(2U); c++)
+					{
+						lAnimCurve = lCurveNode->GetCurve(2U, c);
+						if (lAnimCurve)
+						{
+							DisplayString("        Component ", lComponentName3);
+							DisplayCurveKeys(lAnimCurve);
+						}
+					}
+				}
+				else if (lDataType.GetType() == eFbxEnum)
+				{
+					FbxString lMessage;
+
+					lMessage = "        Property ";
+					lMessage += lProperty.GetName();
+					if (lProperty.GetLabel().GetLen() > 0)
+					{
+						lMessage += " (Label: ";
+						lMessage += lProperty.GetLabel();
+						lMessage += ")";
+					};
+					DisplayString(lMessage.Buffer());
+
+					for (int c = 0; c < lCurveNode->GetCurveCount(0U); c++)
+					{
+						lAnimCurve = lCurveNode->GetCurve(0U, c);
+						if (lAnimCurve)
+							DisplayListCurveKeys(lAnimCurve, &lProperty);
+					}
+				}
+			}
+
+			lProperty = pNode->GetNextProperty(lProperty);
+		} // while
+
 
 	}
 
@@ -2695,6 +2707,9 @@ namespace FBXLibrary
 
 		int lKeyCount = pCurve->KeyGetCount();
 
+		// Keyframe that will be filled out and passed into the joint
+		Keyframe_Info lKeyframe_Info;
+
 		for (lCount = 0; lCount < lKeyCount; lCount++)
 		{
 			lKeyValue = static_cast<float>(pCurve->KeyGetValue(lCount));
@@ -2706,6 +2721,148 @@ namespace FBXLibrary
 			lOutputString += lKeyValue;
 			lOutputString += " [ ";
 			lOutputString += interpolation[InterpolationFlagToIndex(pCurve->KeyGetInterpolation(lCount))];
+			if ((pCurve->KeyGetInterpolation(lCount)&FbxAnimCurveDef::eInterpolationConstant) == FbxAnimCurveDef::eInterpolationConstant)
+			{
+				lOutputString += " | ";
+				lOutputString += constantMode[ConstantmodeFlagToIndex(pCurve->KeyGetConstantMode(lCount))];
+			}
+			else if ((pCurve->KeyGetInterpolation(lCount)&FbxAnimCurveDef::eInterpolationCubic) == FbxAnimCurveDef::eInterpolationCubic)
+			{
+				lOutputString += " | ";
+				lOutputString += cubicMode[TangentmodeFlagToIndex(pCurve->KeyGetTangentMode(lCount))];
+				lOutputString += " | ";
+				lOutputString += tangentWVMode[TangentweightFlagToIndex(pCurve->KeyGet(lCount).GetTangentWeightMode())];
+				lOutputString += " | ";
+				lOutputString += tangentWVMode[TangentVelocityFlagToIndex(pCurve->KeyGet(lCount).GetTangentVelocityMode())];
+			}
+			lOutputString += " ]";
+			lOutputString += "\n";
+			FBXSDK_printf(lOutputString);
+		}
+	}
+
+	// Vertex Section [ 0 = Translation, 1 = Rotation, 2 = 
+	void FBX_Functions::DisplayCurveKeys(FbxAnimCurve* pCurve, Vertex_Part pVertex_Part, Vertex_Part_Data pVertex_Part_Data, int pJointIndex)
+	{
+		static const char* interpolation[] = { "?", "constant", "linear", "cubic" };
+		static const char* constantMode[] = { "?", "Standard", "Next" };
+		static const char* cubicMode[] = { "?", "Auto", "Auto break", "Tcb", "User", "Break", "User break" };
+		static const char* tangentWVMode[] = { "?", "None", "Right", "Next left" };
+
+		FbxTime   lKeyTime;
+		float   lKeyValue;
+		char    lTimeString[256];
+		FbxString lOutputString;
+		int     lCount;
+
+		int lKeyCount = pCurve->KeyGetCount();
+
+		for (lCount = 0; lCount < lKeyCount; lCount++)
+		{
+			// Keyframe that will be filled out and passed into the joint
+			Keyframe_Vertex_Info lKeyframe_Vertex_Info;
+
+			lKeyValue = static_cast<float>(pCurve->KeyGetValue(lCount));
+			lKeyTime = pCurve->KeyGetTime(lCount);
+
+			lOutputString = "            Key Time: ";
+			lOutputString += lKeyTime.GetTimeString(lTimeString, FbxUShort(256));
+			lOutputString += ".... Key Value: ";
+			lOutputString += lKeyValue;
+			lOutputString += " [ ";
+			lOutputString += interpolation[InterpolationFlagToIndex(pCurve->KeyGetInterpolation(lCount))];
+
+			// If index is -1 it is a root node or it's not in the list
+			if (pJointIndex != -1)
+			{
+				// Check to see what we should be putting the info into
+				switch (pVertex_Part)
+				{
+				case TRANSLATION:
+				{
+					switch (pVertex_Part_Data)
+					{
+					case X:
+					{
+						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
+						lKeyframe_Vertex_Info.pVal = lKeyValue;
+						break;
+					}
+					case Y:
+					{
+						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
+						lKeyframe_Vertex_Info.pVal = lKeyValue;
+						break;
+					}
+					case Z:
+					{
+						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
+						lKeyframe_Vertex_Info.pVal = lKeyValue;
+						break;
+					}
+					}
+					break;
+				}
+				case ROTATION:
+				{
+					switch (pVertex_Part_Data)
+					{
+					case X:
+					{
+						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
+						lKeyframe_Vertex_Info.pVal = lKeyValue;
+						break;
+					}
+					case Y:
+					{
+						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
+						lKeyframe_Vertex_Info.pVal = lKeyValue;
+						break;
+					}
+					case Z:
+					{
+						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
+						lKeyframe_Vertex_Info.pVal = lKeyValue;
+						break;
+					}
+					}
+					break;
+				}
+				case SCALE:
+				{
+					switch (pVertex_Part_Data)
+					{
+					case X:
+					{
+						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
+						lKeyframe_Vertex_Info.pVal = lKeyValue;
+						break;
+					}
+					case Y:
+					{
+						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
+						lKeyframe_Vertex_Info.pVal = lKeyValue;
+						break;
+					}
+					case Z:
+					{
+						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
+						lKeyframe_Vertex_Info.pVal = lKeyValue;
+						break;
+					}
+					break;
+					}
+				}
+				}
+
+				// Fill out the valuetype and valueindex of the info
+				lKeyframe_Vertex_Info.pValueType = pVertex_Part;
+				lKeyframe_Vertex_Info.pValueIndex = pVertex_Part_Data;
+
+				// Push back the keyframe info
+				gSkeleton.pJoints[pJointIndex].pVertex_Info_Vector.pVertex_Infos.push_back(lKeyframe_Vertex_Info);
+			}
+
 			if ((pCurve->KeyGetInterpolation(lCount)&FbxAnimCurveDef::eInterpolationConstant) == FbxAnimCurveDef::eInterpolationConstant)
 			{
 				lOutputString += " | ";
@@ -2754,5 +2911,113 @@ namespace FBXLibrary
 			FBXSDK_printf(lOutputString);
 		}
 	}
+
+	void FBX_Functions::ConstructKeyFrames()
+	{
+		// Loop through each joint
+		for (unsigned int i = 0; i < gSkeleton.pJoints.size(); i++)
+		{
+			// Get current joint
+			Joint lCurrJoint = gSkeleton.pJoints[i];
+
+			// Get current vertex infos
+			std::vector<Keyframe_Vertex_Info> lCurrVertex_Infos = lCurrJoint.pVertex_Info_Vector.pVertex_Infos;
+
+			// Create Info Vectors for Trans, Rot, Scale
+			std::vector<Keyframe_Vertex_Info> lTranslation_Infos;
+			std::vector<Keyframe_Vertex_Info> lRotation_Infos;
+			std::vector<Keyframe_Vertex_Info> lScale_Infos;
+
+			// Create a keyframe vertex
+			Keyframe_Vertex lKeyframeVertex;
+
+			// Loop through joints vertex info vector
+			// And construct the types (trans, rot, scale)
+			for (unsigned j = 0; j < lCurrVertex_Infos.size(); j++)
+			{
+				// Current Vertex Info
+				Keyframe_Vertex_Info lCurrVertex_Info = lCurrVertex_Infos[j];
+
+				switch (lCurrVertex_Info.pValueType)
+				{
+				case TRANSLATION:
+					lTranslation_Infos.push_back(lCurrVertex_Info);
+					break;
+				case ROTATION:
+					lRotation_Infos.push_back(lCurrVertex_Info);
+					break;
+				case SCALE:
+					lScale_Infos.push_back(lCurrVertex_Info);
+					break;
+				}
+			}
+
+			// Get sizes of types
+			unsigned int lTranslation_Size = lTranslation_Infos.size();
+			unsigned int lRotation_Size = lRotation_Infos.size();
+			unsigned int lScale_size = lScale_Infos.size();
+
+			// Check to see if all sizes match if so
+			// Loop through each type and create a keyframe
+			if (lTranslation_Size == lRotation_Size == lScale_size)
+			{
+				unsigned int lInfo_Size = lTranslation_Size;
+				for (unsigned int k = 0; k < lInfo_Size; k++)
+				{
+					// Create keyframe info
+					Keyframe_Info lKeyframe;
+
+					// Get current vertex info
+					Keyframe_Vertex_Info lCurr_Translation_Info = lTranslation_Infos[k];
+					Keyframe_Vertex_Info lCurr_Rotation_Info = lRotation_Infos[k];
+					Keyframe_Vertex_Info lCurr_Scale_Info = lScale_Infos[k];
+
+					// Fill out the keyframe with corresponding data
+					switch (lCurr_Translation_Info.pValueIndex)
+					{
+					case X:
+						lKeyframe.pTranslation.pX = lCurr_Translation_Info;
+						break;
+					case Y:
+						lKeyframe.pTranslation.pY = lCurr_Translation_Info;
+						break;
+					case Z:
+						lKeyframe.pTranslation.pZ = lCurr_Translation_Info;
+						break;
+					}
+
+					switch (lCurr_Rotation_Info.pValueIndex)
+					{
+					case X:
+						lKeyframe.pRotation.pX = lCurr_Rotation_Info;
+						break;
+					case Y:
+						lKeyframe.pRotation.pY = lCurr_Rotation_Info;
+						break;
+					case Z:
+						lKeyframe.pRotation.pZ = lCurr_Rotation_Info;
+						break;
+					}
+
+					switch (lCurr_Scale_Info.pValueIndex)
+					{
+					case X:
+						lKeyframe.pScale.pX = lCurr_Scale_Info;
+						break;
+					case Y:
+						lKeyframe.pScale.pY = lCurr_Scale_Info;
+						break;
+					case Z:
+						lKeyframe.pScale.pZ = lCurr_Scale_Info;
+						break;
+					}
+
+					// Push back the keyframe to the skeleton
+					gSkeleton.pJoints[i].pKeyframes.push_back(lKeyframe);
+				}
+			}
+		}
+	}
+
 
 }

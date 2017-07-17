@@ -3,11 +3,22 @@
 #include <DirectXMath.h>
 #include <vector>
 
+// Create an ENUM for filling out Keyframe_Info
+enum Vertex_Part { TRANSLATION = 0, ROTATION = 1, SCALE = 2 };
+enum Vertex_Part_Data { X = 0, Y = 1, Z = 2 };
+
 // Holds the individual data of a keyframe vertex
 struct Keyframe_Vertex_Info
 {
 	int pKeytime;		// To hold the keytime
 	float pVal;			// To hold the data 
+	Vertex_Part pValueType;				// 0 = Trans, 1 = Rot, 2 = Scale
+	Vertex_Part_Data pValueIndex;		// 0 = X, 1 = Y, 2 = Z
+};
+
+struct Keyframe_Vertex_Info_Vector
+{
+	std::vector<Keyframe_Vertex_Info> pVertex_Infos;
 };
 
 // Holds the vertex of the Keyframe
@@ -18,9 +29,9 @@ struct Keyframe_Vertex
 
 struct Keyframe_Info
 {
-	std::vector<Keyframe_Vertex> pTranslation;		// Translation of keyframe
-	std::vector<Keyframe_Vertex> pRotation;			// Rotation of keyframe
-	std::vector<Keyframe_Vertex> pScale;			// Scale of keyframe
+	Keyframe_Vertex pTranslation;		// Translation of keyframe
+	Keyframe_Vertex pRotation;			// Rotation of keyframe
+	Keyframe_Vertex pScale;				// Scale of keyframe
 };
 
 struct Joint
@@ -36,6 +47,7 @@ struct Joint
 
 	// Stuff for animation
 	std::vector<Keyframe_Info> pKeyframes;		// Each joint has it's own keyframes
+	Keyframe_Vertex_Info_Vector pVertex_Info_Vector;	// Holds the vertices infos
 };
 
 // Dont really need bone structure since 
