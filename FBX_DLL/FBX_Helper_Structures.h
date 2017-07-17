@@ -3,11 +3,24 @@
 #include <DirectXMath.h>
 #include <vector>
 
+// Holds the individual data of a keyframe vertex
+struct Keyframe_Vertex_Info
+{
+	int pKeytime;		// To hold the keytime
+	float pVal;			// To hold the data 
+};
+
+// Holds the vertex of the Keyframe
+struct Keyframe_Vertex
+{
+	Keyframe_Vertex_Info pX, pY, pZ;
+};
+
 struct Keyframe_Info
 {
-	DirectX::XMFLOAT3 pTranslation;		// Translation of keyframe
-	DirectX::XMFLOAT3 pRotation;		// Rotation of keyframe
-	DirectX::XMFLOAT3 pScale;			// Scale of keyframe
+	std::vector<Keyframe_Vertex> pTranslation;		// Translation of keyframe
+	std::vector<Keyframe_Vertex> pRotation;			// Rotation of keyframe
+	std::vector<Keyframe_Vertex> pScale;			// Scale of keyframe
 };
 
 struct Joint
