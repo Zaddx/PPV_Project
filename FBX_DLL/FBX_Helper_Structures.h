@@ -48,6 +48,15 @@ struct Joint
 	// Stuff for animation
 	std::vector<Keyframe_Info> pKeyframes;		// Each joint has it's own keyframes
 	Keyframe_Vertex_Info_Vector pVertex_Info_Vector;	// Holds the vertices infos
+	double pAnimationDuration;					// Duration of the animation
+	std::vector<int> pTranslation_KeyTimes;				// Vector of Translation keytimes
+	std::vector<int> pRotation_KeyTimes;				// Vector of Rotation keytimes
+	std::vector<int> pScale_KeyTimes;					// Vector of Scale keytimes
+
+	// Stuff for function use
+	std::vector<Keyframe_Vertex_Info> pTranslation_Infos;
+	std::vector<Keyframe_Vertex_Info> pRotation_Infos;
+	std::vector<Keyframe_Vertex_Info> pScale_Infos;
 };
 
 // Dont really need bone structure since 

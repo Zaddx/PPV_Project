@@ -374,6 +374,16 @@ bool Init_and_Inter::InitScene(User_Input &_input)
 
 	gTeddySkeleton = fbx_Exec.getSkeleton();
 
+	std::vector<Joint> rootIndexedJoints;
+
+	for (unsigned int i = 0; i < gTeddySkeleton->pJoints.size(); i++)
+	{
+		if (gTeddySkeleton->pJoints[i].pParentIndex == -1)
+		{
+			rootIndexedJoints.push_back(gTeddySkeleton->pJoints[i]);
+		}
+	}
+
 	// Add the lines into the joint_debugRenderer
 	for (unsigned int i = 0; i < gTeddySkeleton->pJoints.size(); i++)
 	{

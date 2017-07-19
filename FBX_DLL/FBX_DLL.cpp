@@ -961,6 +961,7 @@ namespace FBXLibrary
 		for (int childIndex = 0; childIndex < pRootNode->GetChildCount(); ++childIndex)
 		{
 			FbxNode* currNode = pRootNode->GetChild(childIndex);
+			std::string nodeName = currNode->GetName();
 			ProcessSkeletonHierarchyRecursively(currNode, 0, 0, -1);
 		}
 	}
@@ -996,6 +997,7 @@ namespace FBXLibrary
 	{
 		// Construct Keyframes before giving skeleton
 		ConstructKeyFrames();
+
 		return &gSkeleton;
 	}
 
@@ -2765,6 +2767,8 @@ namespace FBXLibrary
 			lKeyValue = static_cast<float>(pCurve->KeyGetValue(lCount));
 			lKeyTime = pCurve->KeyGetTime(lCount);
 
+			int checkingVariable = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
+
 			lOutputString = "            Key Time: ";
 			lOutputString += lKeyTime.GetTimeString(lTimeString, FbxUShort(256));
 			lOutputString += ".... Key Value: ";
@@ -2952,72 +2956,277 @@ namespace FBXLibrary
 				}
 			}
 
-			// Get sizes of types
-			unsigned int lTranslation_Size = lTranslation_Infos.size();
-			unsigned int lRotation_Size = lRotation_Infos.size();
-			unsigned int lScale_size = lScale_Infos.size();
+			// Create variables to hold largest keytime
+			// Find the largest keytime for translation, rotation, scale
+			unsigned int lTranslation_Size = LargestKeyTime(lTranslation_Infos);
+			unsigned int lRotation_Size = LargestKeyTime(lRotation_Infos);
+			unsigned int lScale_size = LargestKeyTime(lScale_Infos);
 
 			// Check to see if all sizes match if so
 			// Loop through each type and create a keyframe
-			if (lTranslation_Size == lRotation_Size == lScale_size)
+			if (lTranslation_Size == lRotation_Size &&
+				lTranslation_Size == lScale_size &&
+				lRotation_Size == lScale_size)
 			{
 				unsigned int lInfo_Size = lTranslation_Size;
+
+				// Create a keyframe for the info size
+				// Not filling it out just yet
 				for (unsigned int k = 0; k < lInfo_Size; k++)
 				{
 					// Create keyframe info
 					Keyframe_Info lKeyframe;
 
-					// Get current vertex info
-					Keyframe_Vertex_Info lCurr_Translation_Info = lTranslation_Infos[k];
-					Keyframe_Vertex_Info lCurr_Rotation_Info = lRotation_Infos[k];
-					Keyframe_Vertex_Info lCurr_Scale_Info = lScale_Infos[k];
-
-					// Fill out the keyframe with corresponding data
-					switch (lCurr_Translation_Info.pValueIndex)
-					{
-					case X:
-						lKeyframe.pTranslation.pX = lCurr_Translation_Info;
-						break;
-					case Y:
-						lKeyframe.pTranslation.pY = lCurr_Translation_Info;
-						break;
-					case Z:
-						lKeyframe.pTranslation.pZ = lCurr_Translation_Info;
-						break;
-					}
-
-					switch (lCurr_Rotation_Info.pValueIndex)
-					{
-					case X:
-						lKeyframe.pRotation.pX = lCurr_Rotation_Info;
-						break;
-					case Y:
-						lKeyframe.pRotation.pY = lCurr_Rotation_Info;
-						break;
-					case Z:
-						lKeyframe.pRotation.pZ = lCurr_Rotation_Info;
-						break;
-					}
-
-					switch (lCurr_Scale_Info.pValueIndex)
-					{
-					case X:
-						lKeyframe.pScale.pX = lCurr_Scale_Info;
-						break;
-					case Y:
-						lKeyframe.pScale.pY = lCurr_Scale_Info;
-						break;
-					case Z:
-						lKeyframe.pScale.pZ = lCurr_Scale_Info;
-						break;
-					}
-
 					// Push back the keyframe to the skeleton
 					gSkeleton.pJoints[i].pKeyframes.push_back(lKeyframe);
 				}
 			}
+
+			// Set joint infos
+			gSkeleton.pJoints[i].pTranslation_Infos = lTranslation_Infos;
+			gSkeleton.pJoints[i].pRotation_Infos = lRotation_Infos;
+			gSkeleton.pJoints[i].pScale_Infos = lScale_Infos;
+
+			// Get all keytimes for later use
+			FillOutJointKeyTimes(i);
+
+			// Update the current joint to get updated info
+			lCurrJoint = gSkeleton.pJoints[i];
+
+			// Loop through the vector of empty keyframes
+			for (unsigned int l = 0; l < lCurrJoint.pKeyframes.size(); l++)
+			{
+				// Create the 3 vertices. (Trans, Rot, Scale)
+				Keyframe_Vertex lTranslation_Vertex;
+				Keyframe_Vertex lRotation_Vertex;
+				Keyframe_Vertex lScale_Vertex;
+
+				// Get Translation Vertex At Current Keytime
+				lTranslation_Vertex = GetDataAtKeyTime(lTranslation_Infos, gSkeleton.pJoints[i].pTranslation_KeyTimes, l);
+
+				// Get Rotation Vertex At Current Keytime
+				lRotation_Vertex = GetDataAtKeyTime(lRotation_Infos, gSkeleton.pJoints[i].pRotation_KeyTimes, l);
+
+				// Get Scale Vertex At Current Keytime
+				lScale_Vertex = GetDataAtKeyTime(lScale_Infos, gSkeleton.pJoints[i].pScale_KeyTimes, l);
+
+				// Copy the vertices into the current keyframe
+				gSkeleton.pJoints[i].pKeyframes[l].pTranslation = lTranslation_Vertex;
+				gSkeleton.pJoints[i].pKeyframes[l].pRotation = lRotation_Vertex;
+				gSkeleton.pJoints[i].pKeyframes[l].pScale = lScale_Vertex;
+			}
 		}
 	}
 
+	int FBX_Functions::LargestKeyTime(std::vector<Keyframe_Vertex_Info> pKeyframe_Infos)
+	{
+		int lMaxKeyTime = 0;
 
+		for (unsigned int i = 0; i < pKeyframe_Infos.size() - 1; i++)
+			lMaxKeyTime = CompareKeyTime(pKeyframe_Infos[i], pKeyframe_Infos[i + 1]);
+
+		return lMaxKeyTime;
+	}
+
+	int FBX_Functions::CompareKeyTime(Keyframe_Vertex_Info pA, Keyframe_Vertex_Info pB)
+	{
+		int lBiggestKeyTime = 0;
+
+		if (pA.pKeytime == pB.pKeytime)
+			lBiggestKeyTime = pA.pKeytime;
+		else if (pA.pKeytime > pB.pKeytime)
+			lBiggestKeyTime = pA.pKeytime;
+		else if (pB.pKeytime > pA.pKeytime)
+			lBiggestKeyTime = pB.pKeytime;
+
+		return lBiggestKeyTime;
+	}
+
+	Keyframe_Vertex VertexInterpolation(Keyframe_Vertex pA, Keyframe_Vertex pB, float pRatio)
+	{
+		// Create the keyframe to fill out and return
+		Keyframe_Vertex lTemp;
+
+		// Fill out the keytime of the vertex
+		lTemp.pX.pKeytime = (pA.pX.pKeytime + pB.pX.pKeytime) / 2;
+		lTemp.pY.pKeytime = (pA.pY.pKeytime + pB.pY.pKeytime) / 2;
+		lTemp.pZ.pKeytime = (pA.pZ.pKeytime + pB.pZ.pKeytime) / 2;
+
+		// Fill out the value of the vertex
+		lTemp.pX.pVal = (pB.pX.pVal - pA.pX.pVal) * pRatio;
+		lTemp.pY.pVal = (pB.pY.pVal - pA.pY.pVal) * pRatio;
+		lTemp.pZ.pVal = (pB.pZ.pVal - pA.pZ.pVal) * pRatio;
+
+		// Fill out the vertex part
+		lTemp.pX.pValueType = pA.pX.pValueType;
+		lTemp.pY.pValueType = pA.pY.pValueType;
+		lTemp.pZ.pValueType = pA.pZ.pValueType;
+
+		// FIll out the vertex part data
+		lTemp.pX.pValueIndex = X;
+		lTemp.pY.pValueIndex = Y;
+		lTemp.pZ.pValueIndex = Z;
+
+		// Return the newly interpolate vertex
+		return lTemp;
+	}
+
+	Keyframe_Vertex FBX_Functions::GetDataAtKeyTime(std::vector<Keyframe_Vertex_Info> pKeyframe_Infos, std::vector<int> pKeytimes, int pKeyTime)
+	{
+		// Create a Vertex to hold data
+		Keyframe_Vertex lTemp_Vertex;
+
+		// Create variable to hold vector size
+		unsigned int lSize = pKeyframe_Infos.size();
+		unsigned int lK_Size = pKeytimes.size();
+
+		// Create bool to see if the keytime exists
+		bool lKeytime_Exist = true;
+
+		// To hold prev and next keytimes
+		int lPrev_Keytime;
+		int lNext_Keytime;
+
+		// 
+		bool lPrevFound = false;
+
+		for (unsigned int i = 0; i < lK_Size; i++)
+		{
+			if (pKeyTime != pKeytimes[i])
+			{
+				if ((i + 1) >= lK_Size)
+				{
+					// Means animation should restart
+					lNext_Keytime = pKeytimes[0];
+				}
+				if (i == lK_Size - 1)
+				{
+					lKeytime_Exist = false;
+					lNext_Keytime = pKeytimes[i];
+					break;
+				}
+				else if (lPrevFound)
+				{
+					lKeytime_Exist = false;
+					lNext_Keytime = pKeytimes[i];
+					break;
+				}
+			}
+			else
+			{
+				// Then it does exist
+				// break because it's found
+				lKeytime_Exist = true;
+				break;
+			}
+
+			// Update previous key time
+			if (pKeytimes[i] < pKeyTime)
+				lPrev_Keytime = pKeytimes[i];
+
+			// Check to see if lPrev_Keytime is done updatign
+			if (pKeytimes[i] > pKeyTime)
+			{
+				lKeytime_Exist = false;
+				lNext_Keytime = pKeytimes[i];
+				break;
+			}
+		}
+
+		if (lKeytime_Exist)
+		{
+			// Loop through for each X
+			for (unsigned int i = 0; i < lSize; i++)
+				if (pKeyframe_Infos[i].pKeytime == pKeyTime && pKeyframe_Infos[i].pValueIndex == X)
+					lTemp_Vertex.pX = pKeyframe_Infos[i];
+
+			// Loop through for each Y
+			for (unsigned int i = 0; i < lSize; i++)
+				if (pKeyframe_Infos[i].pKeytime == pKeyTime && pKeyframe_Infos[i].pValueIndex == Y)
+					lTemp_Vertex.pY = pKeyframe_Infos[i];
+
+			// Loop through for each Z
+			for (unsigned int i = 0; i < lSize; i++)
+				if (pKeyframe_Infos[i].pKeytime == pKeyTime && pKeyframe_Infos[i].pValueIndex == Z)
+					lTemp_Vertex.pZ = pKeyframe_Infos[i];
+		}
+		else
+		{
+			// interpolate between prev and next keytimes vertices
+			Keyframe_Vertex lNext_Vertex;
+			Keyframe_Vertex lPrev_Vertex;
+			Keyframe_Vertex lLerp_Vertex;
+
+			// Fill out the prev vertex
+			// Loop through for each X
+			for (unsigned int i = 0; i < lSize; i++)
+				if (pKeyframe_Infos[i].pKeytime == lPrev_Keytime && pKeyframe_Infos[i].pValueIndex == X)
+					lPrev_Vertex.pX = pKeyframe_Infos[i];
+
+			// Loop through for each Y
+			for (unsigned int i = 0; i < lSize; i++)
+				if (pKeyframe_Infos[i].pKeytime == lPrev_Keytime && pKeyframe_Infos[i].pValueIndex == Y)
+					lPrev_Vertex.pY = pKeyframe_Infos[i];
+
+			// Loop through for each Z
+			for (unsigned int i = 0; i < lSize; i++)
+				if (pKeyframe_Infos[i].pKeytime == lPrev_Keytime && pKeyframe_Infos[i].pValueIndex == Z)
+					lPrev_Vertex.pZ = pKeyframe_Infos[i];
+
+			// Fill out the next vertex
+			// Loop through for each X
+			for (unsigned int i = 0; i < lSize; i++)
+				if (pKeyframe_Infos[i].pKeytime == lNext_Keytime && pKeyframe_Infos[i].pValueIndex == X)
+					lNext_Vertex.pX = pKeyframe_Infos[i];
+
+			// Loop through for each Y
+			for (unsigned int i = 0; i < lSize; i++)
+				if (pKeyframe_Infos[i].pKeytime == lNext_Keytime && pKeyframe_Infos[i].pValueIndex == Y)
+					lNext_Vertex.pY = pKeyframe_Infos[i];
+
+			// Loop through for each Z
+			for (unsigned int i = 0; i < lSize; i++)
+				if (pKeyframe_Infos[i].pKeytime == lNext_Keytime && pKeyframe_Infos[i].pValueIndex == Z)
+					lNext_Vertex.pZ = pKeyframe_Infos[i];
+
+			// Interpolate between the prev -> next
+			lLerp_Vertex = VertexInterpolation(lPrev_Vertex, lNext_Vertex, 0.5f);
+
+			// return the interpolated vertex
+			return lLerp_Vertex;
+		}
+
+
+		return lTemp_Vertex;
+	}
+
+	void FBX_Functions::FillOutJointKeyTimes(int pJointIndex)
+	{
+		// Create a set to hold my keytimes
+		std::set<int> lT_Set;
+		std::set<int> lR_Set;
+		std::set<int> lS_Set;
+
+		// Get the sizes of the key time vectors
+		unsigned int lT_Size = gSkeleton.pJoints[pJointIndex].pTranslation_Infos.size();
+		unsigned int lR_Size = gSkeleton.pJoints[pJointIndex].pRotation_Infos.size();
+		unsigned int lS_Size = gSkeleton.pJoints[pJointIndex].pScale_Infos.size();
+
+		// Fill out the set for translation
+		for (unsigned i = 0; i < lT_Size; ++i)
+			lT_Set.insert(gSkeleton.pJoints[pJointIndex].pTranslation_Infos[i].pKeytime);
+
+		// Fill out the set for rotation
+		for (unsigned i = 0; i < lR_Size; ++i)
+			lR_Set.insert(gSkeleton.pJoints[pJointIndex].pRotation_Infos[i].pKeytime);
+
+		// Fill out the set for scale
+		for (unsigned i = 0; i < lS_Size; ++i)
+			lS_Set.insert(gSkeleton.pJoints[pJointIndex].pScale_Infos[i].pKeytime);
+
+		// Assign the sets to the keytime vectors of the joint
+		gSkeleton.pJoints[pJointIndex].pTranslation_KeyTimes.assign(lT_Set.begin(), lT_Set.end());
+		gSkeleton.pJoints[pJointIndex].pRotation_KeyTimes.assign(lR_Set.begin(), lR_Set.end());
+		gSkeleton.pJoints[pJointIndex].pScale_KeyTimes.assign(lS_Set.begin(), lS_Set.end());
+	}
 }

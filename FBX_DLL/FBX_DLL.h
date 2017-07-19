@@ -1,6 +1,8 @@
 #pragma once
 
 #include <fbxsdk.h>
+#include <algorithm>
+#include <set>
 
 namespace FBXLibrary
 {
@@ -76,5 +78,9 @@ namespace FBXLibrary
 
 		// Persoanl Function to construct vertices
 		void ConstructKeyFrames();
+		int LargestKeyTime(std::vector<Keyframe_Vertex_Info> pKeyframe_Infos);
+		int CompareKeyTime(Keyframe_Vertex_Info pA, Keyframe_Vertex_Info pB);
+		Keyframe_Vertex GetDataAtKeyTime(std::vector<Keyframe_Vertex_Info> pKeyframe_Infos, std::vector<int> pKeytimes, int pKeyTime);
+		void FillOutJointKeyTimes(int pJointIndex);
 	};
 }
