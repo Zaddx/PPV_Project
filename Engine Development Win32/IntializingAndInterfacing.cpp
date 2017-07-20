@@ -758,9 +758,9 @@ void Init_and_Inter::UpdateKeyframe(int pKeyframeIndex)
 		float lRZVal = gMageSkeleton->pJoints[i].pKeyframes[pKeyframeIndex].pRotation.pZ.pVal;
 
 		// Add keyframe value to the starting position
-		lXVal += lStart_X;
-		lYVal += lStart_Y;
-		lZVal += lStart_Z;
+		//lXVal += lStart_X;
+		//lYVal += lStart_Y;
+		//lZVal += lStart_Z;
 
 		// Get the Position, X,Y,Z Axis
 		XMFLOAT3 lPosition = XMFLOAT3(lXVal, lYVal, lZVal);

@@ -1320,6 +1320,7 @@ namespace FBXLibrary
 					//lConnectionString += k;
 					pConnectionString += "\"";
 					pConnectionString += (char*)lLayeredTexture->GetName();
+					gMesh.pTextureName = lLayeredTexture->GetName();
 					pConnectionString += "\"";
 					pConnectionString += " ";
 				}
