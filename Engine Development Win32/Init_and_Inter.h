@@ -70,8 +70,10 @@ public:
 
 	// Variables for animation keypresses
 	int gKeyframeIndex = 0;
-	bool gAnimationPlaying = true;
+	bool gAnimationScrubbing = true;
+	bool gAnimationPlaying = false;
 	bool gAnimationTweening = false;
+	bool gKeyframeOutOfRange = false;
 
 	// Variables for camera movement (none direct input way)
 	POINT gLastFrameCursorPos;
@@ -178,6 +180,9 @@ private:
 	// Model Globals
 	Model gMageModel;
 	Model gTeddyModel;
+
+	// Function For Scrubbing
+	void UpdateKeyframe(int pKeyframeIndex);
 
 public:
 
