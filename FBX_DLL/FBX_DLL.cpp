@@ -2360,57 +2360,57 @@ namespace FBXLibrary
 			{
 				FBXSDK_printf("        TX\n");
 				//DisplayCurveKeys(lAnimCurve);
-				DisplayCurveKeys(lAnimCurve, Vertex_Part::TRANSLATION, Vertex_Part_Data::X, jointIndex);
+				DisplayCurveKeys(lAnimCurve, pNode, Vertex_Part::TRANSLATION, Vertex_Part_Data::X, jointIndex);
 			}
 			lAnimCurve = pNode->LclTranslation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
 			if (lAnimCurve)
 			{
 				FBXSDK_printf("        TY\n");
-				DisplayCurveKeys(lAnimCurve, Vertex_Part::TRANSLATION, Vertex_Part_Data::Y, jointIndex);
+				DisplayCurveKeys(lAnimCurve, pNode, Vertex_Part::TRANSLATION, Vertex_Part_Data::Y, jointIndex);
 			}
 			lAnimCurve = pNode->LclTranslation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
 			if (lAnimCurve)
 			{
 				FBXSDK_printf("        TZ\n");
-				DisplayCurveKeys(lAnimCurve, Vertex_Part::TRANSLATION, Vertex_Part_Data::Z, jointIndex);
+				DisplayCurveKeys(lAnimCurve, pNode, Vertex_Part::TRANSLATION, Vertex_Part_Data::Z, jointIndex);
 			}
 
 			lAnimCurve = pNode->LclRotation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
 			if (lAnimCurve)
 			{
 				FBXSDK_printf("        RX\n");
-				DisplayCurveKeys(lAnimCurve, Vertex_Part::ROTATION, Vertex_Part_Data::X, jointIndex);
+				DisplayCurveKeys(lAnimCurve, pNode, Vertex_Part::ROTATION, Vertex_Part_Data::X, jointIndex);
 			}
 			lAnimCurve = pNode->LclRotation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
 			if (lAnimCurve)
 			{
 				FBXSDK_printf("        RY\n");
-				DisplayCurveKeys(lAnimCurve, Vertex_Part::ROTATION, Vertex_Part_Data::Y, jointIndex);
+				DisplayCurveKeys(lAnimCurve, pNode, Vertex_Part::ROTATION, Vertex_Part_Data::Y, jointIndex);
 			}
 			lAnimCurve = pNode->LclRotation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
 			if (lAnimCurve)
 			{
 				FBXSDK_printf("        RZ\n");
-				DisplayCurveKeys(lAnimCurve, Vertex_Part::ROTATION, Vertex_Part_Data::Z, jointIndex);
+				DisplayCurveKeys(lAnimCurve, pNode, Vertex_Part::ROTATION, Vertex_Part_Data::Z, jointIndex);
 			}
 
 			lAnimCurve = pNode->LclScaling.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_X);
 			if (lAnimCurve)
 			{
 				FBXSDK_printf("        SX\n");
-				DisplayCurveKeys(lAnimCurve, Vertex_Part::SCALE, Vertex_Part_Data::X, jointIndex);
+				DisplayCurveKeys(lAnimCurve, pNode, Vertex_Part::SCALE, Vertex_Part_Data::X, jointIndex);
 			}
 			lAnimCurve = pNode->LclScaling.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y);
 			if (lAnimCurve)
 			{
 				FBXSDK_printf("        SY\n");
-				DisplayCurveKeys(lAnimCurve, Vertex_Part::SCALE, Vertex_Part_Data::Y, jointIndex);
+				DisplayCurveKeys(lAnimCurve, pNode, Vertex_Part::SCALE, Vertex_Part_Data::Y, jointIndex);
 			}
 			lAnimCurve = pNode->LclScaling.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z);
 			if (lAnimCurve)
 			{
 				FBXSDK_printf("        SZ\n");
-				DisplayCurveKeys(lAnimCurve, Vertex_Part::SCALE, Vertex_Part_Data::Z, jointIndex);
+				DisplayCurveKeys(lAnimCurve, pNode, Vertex_Part::SCALE, Vertex_Part_Data::Z, jointIndex);
 			}
 		}
 
@@ -2745,7 +2745,7 @@ namespace FBXLibrary
 	}
 
 	// Vertex Section [ 0 = Translation, 1 = Rotation, 2 = 
-	void FBX_Functions::DisplayCurveKeys(FbxAnimCurve* pCurve, Vertex_Part pVertex_Part, Vertex_Part_Data pVertex_Part_Data, int pJointIndex)
+	void FBX_Functions::DisplayCurveKeys(FbxAnimCurve* pCurve, FbxNode* pNode, Vertex_Part pVertex_Part, Vertex_Part_Data pVertex_Part_Data, int pJointIndex)
 	{
 		static const char* interpolation[] = { "?", "constant", "linear", "cubic" };
 		static const char* constantMode[] = { "?", "Standard", "Next" };
@@ -2781,85 +2781,9 @@ namespace FBXLibrary
 			if (pJointIndex != -1)
 			{
 				// Check to see what we should be putting the info into
-				switch (pVertex_Part)
-				{
-				case TRANSLATION:
-				{
-					switch (pVertex_Part_Data)
-					{
-					case X:
-					{
-						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
-						lKeyframe_Vertex_Info.pVal = lKeyValue;
-						break;
-					}
-					case Y:
-					{
-						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
-						lKeyframe_Vertex_Info.pVal = lKeyValue;
-						break;
-					}
-					case Z:
-					{
-						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
-						lKeyframe_Vertex_Info.pVal = lKeyValue;
-						break;
-					}
-					}
-					break;
-				}
-				case ROTATION:
-				{
-					switch (pVertex_Part_Data)
-					{
-					case X:
-					{
-						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
-						lKeyframe_Vertex_Info.pVal = lKeyValue;
-						break;
-					}
-					case Y:
-					{
-						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
-						lKeyframe_Vertex_Info.pVal = lKeyValue;
-						break;
-					}
-					case Z:
-					{
-						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
-						lKeyframe_Vertex_Info.pVal = lKeyValue;
-						break;
-					}
-					}
-					break;
-				}
-				case SCALE:
-				{
-					switch (pVertex_Part_Data)
-					{
-					case X:
-					{
-						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
-						lKeyframe_Vertex_Info.pVal = lKeyValue;
-						break;
-					}
-					case Y:
-					{
-						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
-						lKeyframe_Vertex_Info.pVal = lKeyValue;
-						break;
-					}
-					case Z:
-					{
-						lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
-						lKeyframe_Vertex_Info.pVal = lKeyValue;
-						break;
-					}
-					break;
-					}
-				}
-				}
-
+				lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
+				lKeyframe_Vertex_Info.pVal = lKeyValue;
+				//lKeyframe_Vertex_Info.pVal = *pNode->EvaluateGlobalTransform().Buffer()->mData;
 				// Fill out the valuetype and valueindex of the info
 				lKeyframe_Vertex_Info.pValueType = pVertex_Part;
 				lKeyframe_Vertex_Info.pValueIndex = pVertex_Part_Data;

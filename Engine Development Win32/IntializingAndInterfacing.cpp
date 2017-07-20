@@ -498,9 +498,7 @@ void Init_and_Inter::UpdateScene(double time, User_Input &_input)
 		UpdateKeyframe(input.gKeyframeIndex);
 
 	else if (input.gAnimationPlaying)
-	{
-
-	}
+		UpdateKeyframe(input.gKeyframeIndex);
 
 	else if (input.gAnimationTweening)
 	{
@@ -737,11 +735,14 @@ void Init_and_Inter::UpdateKeyframe(int pKeyframeIndex)
 	for (unsigned int i = 0; i < gMageSkeleton->pJoints.size(); i++)
 	{
 		// Check to see if the index is even inside of the range
-		if (gMageSkeleton->pJoints[i].pKeyframes.size() - 1 < pKeyframeIndex)
+		if (gMageSkeleton->pJoints[i].pKeyframes.size() - 1 <= pKeyframeIndex)
 		{
 			input.gKeyframeOutOfRange = true;
 			pKeyframeIndex = gMageSkeleton->pJoints[i].pKeyframes.size() - 1;
 		}
+		else
+			input.gKeyframeOutOfRange = false;
+
 		// Get the starting position X, Y, Z
 		float lStart_X = gMageSkeleton->pJoints[i].pPosition.x;
 		float lStart_Y = gMageSkeleton->pJoints[i].pPosition.y;
@@ -758,9 +759,9 @@ void Init_and_Inter::UpdateKeyframe(int pKeyframeIndex)
 		float lRZVal = gMageSkeleton->pJoints[i].pKeyframes[pKeyframeIndex].pRotation.pZ.pVal;
 
 		// Add keyframe value to the starting position
-		//lXVal += lStart_X;
-		//lYVal += lStart_Y;
-		//lZVal += lStart_Z;
+		lXVal += lStart_X;
+		lYVal += lStart_Y;
+		lZVal += lStart_Z;
 
 		// Get the Position, X,Y,Z Axis
 		XMFLOAT3 lPosition = XMFLOAT3(lXVal, lYVal, lZVal);
@@ -801,13 +802,15 @@ void Init_and_Inter::UpdateKeyframe(int pKeyframeIndex)
 			input.gKeyframeOutOfRange = true;
 			pKeyframeIndex = gMageSkeleton->pJoints[i].pKeyframes.size() - 1;
 		}
-		if (gMageSkeleton->pJoints[lParentIndex].pKeyframes.size() - 1 < pKeyframeIndex)
+		else if (gMageSkeleton->pJoints[lParentIndex].pKeyframes.size() - 1 < pKeyframeIndex)
 		{
 			input.gKeyframeOutOfRange = true;
 			pKeyframeIndex = gMageSkeleton->pJoints[lParentIndex].pKeyframes.size() - 1;
 		}
-
-		else
+		else if (gMageSkeleton->pJoints[i].pKeyframes.size() - 1 > pKeyframeIndex)
+		{
+			input.gKeyframeOutOfRange = false;
+		}
 		{
 			// Get the X, Y, Z values at the given keyframe
 			float lChild_XVal = gMageSkeleton->pJoints[i].pKeyframes[pKeyframeIndex].pTranslation.pX.pVal;
@@ -837,6 +840,7 @@ void Init_and_Inter::UpdateKeyframe(int pKeyframeIndex)
 	// Push cpu to gpu
 	mage_bone_debugRenderer.push_to_gpu(d3d11DevCon);
 }
+
 
 
 void Debug_Renderer::add_debug_line(XMFLOAT3 a, XMFLOAT3 b, XMFLOAT4 color)
@@ -920,7 +924,7 @@ void User_Input::DetectInput(double time, Init_and_Inter& _initializer, HWND hWn
 	SHORT lRightArrowKeyState = GetAsyncKeyState(VK_RIGHT); // Right Arrow
 	SHORT lF1KeyState = GetAsyncKeyState(VK_F1);	  // F1 Key
 	SHORT lF2KeyState = GetAsyncKeyState(VK_F2);	  // F2 Key
-	SHORT lF3KeyState = GetAsyncKeyState(VK_F2);	  // F3 Key
+	SHORT lF3KeyState = GetAsyncKeyState(VK_F3);	  // F3 Key
 
 	if ((1 << 15) & lEscKeyState)
 		PostMessage(hWnd, WM_CLOSE, 0, 0);
@@ -995,8 +999,8 @@ void User_Input::DetectInput(double time, Init_and_Inter& _initializer, HWND hWn
 		gAnimationTweening = false;
 		gAnimationPlaying = true;
 
-		std::cout << "Animation Scurbbin: " << gAnimationScrubbing << " \n";
 		std::cout << "Animation Playing: " << gAnimationPlaying << " \n";
+		std::cout << "Animation Scrubbing: " << gAnimationScrubbing << " \n";
 		std::cout << "Animation Tweening: " << gAnimationTweening << " \n";
 
 	}
@@ -1007,9 +1011,9 @@ void User_Input::DetectInput(double time, Init_and_Inter& _initializer, HWND hWn
 		gAnimationTweening = true;
 		gAnimationPlaying = false;
 
-		std::cout << "Animation Scurbbin: " << gAnimationScrubbing << " \n";
-		std::cout << "Animation Playing: " << gAnimationPlaying << " \n";
 		std::cout << "Animation Tweening: " << gAnimationTweening << " \n";
+		std::cout << "Animation Scrubbing: " << gAnimationScrubbing << " \n";
+		std::cout << "Animation Playing: " << gAnimationPlaying << " \n";
 	}
 
 	if ((1 << 15) & lF3KeyState && !gAnimationScrubbing)
@@ -1018,9 +1022,20 @@ void User_Input::DetectInput(double time, Init_and_Inter& _initializer, HWND hWn
 		gAnimationTweening = false;
 		gAnimationPlaying = false;
 
-		std::cout << "Animation Scurbbin: " << gAnimationScrubbing << " \n";
+		std::cout << "Animation Scrubbing: " << gAnimationScrubbing << " \n";
 		std::cout << "Animation Playing: " << gAnimationPlaying << " \n";
 		std::cout << "Animation Tweening: " << gAnimationTweening << " \n";
+	}
+
+	if (gAnimationPlaying)
+	{
+		gKeyframeIndex++;
+
+		// Restart the animation
+		if (gKeyframeOutOfRange)
+			gKeyframeIndex = 0;
+
+		// std::cout << "KeyFrameIndex: " << gKeyframeIndex << " \n";
 	}
 
 	//mouseLastState = mouseCurrState;
