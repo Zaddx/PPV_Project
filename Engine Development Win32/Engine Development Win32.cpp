@@ -62,7 +62,7 @@ int messageloop()
 			_input.DetectInput(_timer.frameTime, _initializer, hWnd);
 
 			// Run graphics code
-			_initializer.UpdateScene(_timer.frameTime, _input);
+			_initializer.UpdateScene(_timer.frameTime, _input, _timer);
 			_initializer.DrawScene();
 		}
 	}

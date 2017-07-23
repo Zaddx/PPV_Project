@@ -3131,6 +3131,7 @@ namespace FBXLibrary
 		std::set<int> lT_Set;
 		std::set<int> lR_Set;
 		std::set<int> lS_Set;
+		std::set<int> lAll_Set;
 
 		// Get the sizes of the key time vectors
 		unsigned int lT_Size = gSkeleton.pJoints[pJointIndex].pTranslation_Infos.size();
@@ -3139,19 +3140,28 @@ namespace FBXLibrary
 
 		// Fill out the set for translation
 		for (unsigned i = 0; i < lT_Size; ++i)
+		{
 			lT_Set.insert(gSkeleton.pJoints[pJointIndex].pTranslation_Infos[i].pKeytime);
-
+			lAll_Set.insert(gSkeleton.pJoints[pJointIndex].pTranslation_Infos[i].pKeytime);
+		}
 		// Fill out the set for rotation
 		for (unsigned i = 0; i < lR_Size; ++i)
+		{
 			lR_Set.insert(gSkeleton.pJoints[pJointIndex].pRotation_Infos[i].pKeytime);
-
+			lAll_Set.insert(gSkeleton.pJoints[pJointIndex].pRotation_Infos[i].pKeytime);
+		}
 		// Fill out the set for scale
 		for (unsigned i = 0; i < lS_Size; ++i)
+		{
 			lS_Set.insert(gSkeleton.pJoints[pJointIndex].pScale_Infos[i].pKeytime);
+			lAll_Set.insert(gSkeleton.pJoints[pJointIndex].pScale_Infos[i].pKeytime);
+		}
+		
 
 		// Assign the sets to the keytime vectors of the joint
 		gSkeleton.pJoints[pJointIndex].pTranslation_KeyTimes.assign(lT_Set.begin(), lT_Set.end());
 		gSkeleton.pJoints[pJointIndex].pRotation_KeyTimes.assign(lR_Set.begin(), lR_Set.end());
 		gSkeleton.pJoints[pJointIndex].pScale_KeyTimes.assign(lS_Set.begin(), lS_Set.end());
+		gSkeleton.pJoints[pJointIndex].pAll_KeyTimes.assign(lAll_Set.begin(), lAll_Set.end());
 	}
 }

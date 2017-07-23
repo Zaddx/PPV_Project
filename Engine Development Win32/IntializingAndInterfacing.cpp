@@ -483,7 +483,7 @@ bool Init_and_Inter::InitScene(User_Input &_input)
 	return true;
 }
 
-void Init_and_Inter::UpdateScene(double time, User_Input &_input)
+void Init_and_Inter::UpdateScene(double time, User_Input &_input, Timer pTimer)
 {
 	// Update the input
 	input = _input;
@@ -501,9 +501,7 @@ void Init_and_Inter::UpdateScene(double time, User_Input &_input)
 		UpdateKeyframe(input.gKeyframeIndex);
 
 	else if (input.gAnimationTweening)
-	{
-
-	}
+		TweeningAnimation(pTimer);
 
 	_input = input;
 
@@ -841,6 +839,126 @@ void Init_and_Inter::UpdateKeyframe(int pKeyframeIndex)
 	mage_bone_debugRenderer.push_to_gpu(d3d11DevCon);
 }
 
+Keyframe_Vertex VertexInterpolation(Keyframe_Vertex pA, Keyframe_Vertex pB, float pRatio)
+{
+	// Create the keyframe to fill out and return
+	Keyframe_Vertex lTemp;
+
+	// Fill out the keytime of the vertex
+	lTemp.pX.pKeytime = (pA.pX.pKeytime + pB.pX.pKeytime) / 2;
+	lTemp.pY.pKeytime = (pA.pY.pKeytime + pB.pY.pKeytime) / 2;
+	lTemp.pZ.pKeytime = (pA.pZ.pKeytime + pB.pZ.pKeytime) / 2;
+
+	// Fill out the value of the vertex
+	lTemp.pX.pVal = (pB.pX.pVal - pA.pX.pVal) * pRatio;
+	lTemp.pY.pVal = (pB.pY.pVal - pA.pY.pVal) * pRatio;
+	lTemp.pZ.pVal = (pB.pZ.pVal - pA.pZ.pVal) * pRatio;
+
+	// Fill out the vertex part
+	lTemp.pX.pValueType = pA.pX.pValueType;
+	lTemp.pY.pValueType = pA.pY.pValueType;
+	lTemp.pZ.pValueType = pA.pZ.pValueType;
+
+	// FIll out the vertex part data
+	lTemp.pX.pValueIndex = X;
+	lTemp.pY.pValueIndex = Y;
+	lTemp.pZ.pValueIndex = Z;
+
+	// Return the newly interpolate vertex
+	return lTemp;
+}
+
+
+void Init_and_Inter::TweeningAnimation(Timer pTimer)
+{
+	// Make the timer and map it to the number of keyframes of a joint
+	static Timer lTimer;
+	lTimer.frameCount++;
+	if (lTimer.GetTime() > gMageSkeleton->pJoints[0].pKeyframes.size())
+	{
+		lTimer.frameCount = 0;
+		lTimer.StartTimer();
+	}
+	lTimer.frameTime = lTimer.GetFrameTime();
+
+	// Start by getting d (ratio)
+	float lD = pTimer.GetTime();
+
+	// Get the time (t)
+	float lT = lTimer.GetTime();
+
+	// Ints to hold the keyframe values
+	int lBelow_KeyTime = 0;
+	int lAbove_KeyTime = 0;
+	
+	// Before we loop the joints clear the debug renders
+	mage_bone_debugRenderer.clear_counter();
+	mage_joint_debugRenderer.clear_counter();
+
+	// Loop through each joint
+	for (unsigned int i = 0; i < gMageSkeleton->pJoints.size(); i++)
+	{
+		// Loop through the the joints keyframes
+		for (unsigned int j = 0; j < gMageSkeleton->pJoints[i].pAll_KeyTimes.size(); j++)
+		{
+			// Check to see if j is equal to the last index
+			// If so lerp it between the last and first index
+			if (j + 1 == gMageSkeleton->pJoints[i].pAll_KeyTimes.size())
+			{
+				lBelow_KeyTime = gMageSkeleton->pJoints[i].pAll_KeyTimes[j] - 1;
+				lAbove_KeyTime = gMageSkeleton->pJoints[i].pAll_KeyTimes[0];
+			}
+			// Check to see if the time is less then j and j + 1
+			else if (gMageSkeleton->pJoints[i].pAll_KeyTimes[j] > lT && lT < gMageSkeleton->pJoints[i].pAll_KeyTimes[j + 1])
+			{
+				lBelow_KeyTime = gMageSkeleton->pJoints[i].pAll_KeyTimes[j] - 1;
+				lAbove_KeyTime = gMageSkeleton->pJoints[i].pAll_KeyTimes[j + 1] - 1;
+			}
+		}
+
+		Keyframe_Info lBelow_Keyframe = gMageSkeleton->pJoints[i].pKeyframes[lBelow_KeyTime];
+		Keyframe_Info lAbove_Keyframe = gMageSkeleton->pJoints[i].pKeyframes[lAbove_KeyTime];
+		Keyframe_Info lLerped_Keyframe;
+
+		lLerped_Keyframe.pTranslation = VertexInterpolation(lBelow_Keyframe.pTranslation, lAbove_Keyframe.pTranslation, lD);
+		lLerped_Keyframe.pRotation = VertexInterpolation(lBelow_Keyframe.pRotation, lAbove_Keyframe.pRotation, lD);
+		lLerped_Keyframe.pScale = VertexInterpolation(lBelow_Keyframe.pScale, lAbove_Keyframe.pScale, lD);
+
+		XMFLOAT3 lLerp_Translation = XMFLOAT3(lLerped_Keyframe.pTranslation.pX.pVal, lLerped_Keyframe.pTranslation.pY.pVal, lLerped_Keyframe.pTranslation.pZ.pVal);
+		XMFLOAT3 lAbove_Translation = XMFLOAT3(lAbove_Keyframe.pTranslation.pX.pVal, lAbove_Keyframe.pTranslation.pY.pVal, lAbove_Keyframe.pTranslation.pZ.pVal);
+		mage_bone_debugRenderer.add_debug_line(lLerp_Translation, lAbove_Translation, XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+
+		// Get the X, Y, Z of lerped translation
+		float lXVal = lLerped_Keyframe.pTranslation.pX.pVal;
+		float lYVal = lLerped_Keyframe.pTranslation.pY.pVal;
+		float lZVal = lLerped_Keyframe.pTranslation.pZ.pVal;
+
+		// Get the Position, X,Y,Z Axis
+		XMFLOAT3 lPosition = XMFLOAT3(lXVal, lYVal, lZVal);
+		XMFLOAT3 lXAxis = XMFLOAT3(gMageSkeleton->pJoints[i].pXAxis.x, gMageSkeleton->pJoints[i].pXAxis.y, gMageSkeleton->pJoints[i].pXAxis.z);
+		XMFLOAT3 lYAxis = XMFLOAT3(gMageSkeleton->pJoints[i].pYAxis.x, gMageSkeleton->pJoints[i].pYAxis.y, gMageSkeleton->pJoints[i].pYAxis.z);
+		XMFLOAT3 lZAxis = XMFLOAT3(gMageSkeleton->pJoints[i].pZAxis.x, gMageSkeleton->pJoints[i].pZAxis.y, gMageSkeleton->pJoints[i].pZAxis.z);
+
+		// Add lines to the debug renderer
+		// Draw X axis in red
+		XMFLOAT3 lPosToXAxis = XMFLOAT3(lPosition.x + lXAxis.x, lPosition.y + lXAxis.y, lPosition.z + lXAxis.z);
+		mage_joint_debugRenderer.add_debug_line(lPosition, lPosToXAxis, XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f));
+		// Draw Y axis in green
+		XMFLOAT3 lPosToYAxis = XMFLOAT3(lPosition.x + lYAxis.x, lPosition.y + lYAxis.y, lPosition.z + lYAxis.z);
+		mage_joint_debugRenderer.add_debug_line(lPosition, lPosToYAxis, XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f));
+		// Draw Z axis in blue
+		XMFLOAT3 lPosToZAxis = XMFLOAT3(lPosition.x + lZAxis.x, lPosition.y + lZAxis.y, lPosition.z + lZAxis.z);
+		mage_joint_debugRenderer.add_debug_line(lPosition, lPosToZAxis, XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f));
+	}
+
+	mage_bone_debugRenderer.push_to_gpu(d3d11DevCon);
+	mage_joint_debugRenderer.push_to_gpu(d3d11DevCon);
+
+
+	// Update the keyframe 
+	UpdateKeyframe(lBelow_KeyTime);
+	UpdateKeyframe(lAbove_KeyTime);
+}
 
 
 void Debug_Renderer::add_debug_line(XMFLOAT3 a, XMFLOAT3 b, XMFLOAT4 color)

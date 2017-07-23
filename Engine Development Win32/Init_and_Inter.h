@@ -183,13 +183,14 @@ private:
 
 	// Function For Scrubbing
 	void UpdateKeyframe(int pKeyframeIndex);
-
+	void TweeningAnimation(float pTime);
+	void TweeningAnimation(Timer pTimer);
 public:
 
 	bool InitializeDirect3d11App(HINSTANCE hInstance, HWND hWnd);
 	void ReleaseObjects();
 	bool InitScene(User_Input &_input);
-	void UpdateScene(double time, User_Input &_input);
+	void UpdateScene(double time, User_Input &_input, Timer pTimer);
 	void DrawScene();
 	void UpdateCamera();
 };

@@ -52,6 +52,7 @@ struct Joint
 	std::vector<int> pTranslation_KeyTimes;				// Vector of Translation keytimes
 	std::vector<int> pRotation_KeyTimes;				// Vector of Rotation keytimes
 	std::vector<int> pScale_KeyTimes;					// Vector of Scale keytimes
+	std::vector<int> pAll_KeyTimes;						// Vector of all keytimes
 
 	// Stuff for function use
 	std::vector<Keyframe_Vertex_Info> pTranslation_Infos;
