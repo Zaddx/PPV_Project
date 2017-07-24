@@ -868,7 +868,6 @@ Keyframe_Vertex VertexInterpolation(Keyframe_Vertex pA, Keyframe_Vertex pB, floa
 	return lTemp;
 }
 
-
 void Init_and_Inter::TweeningAnimation(Timer pTimer)
 {
 	// Make the timer and map it to the number of keyframes of a joint

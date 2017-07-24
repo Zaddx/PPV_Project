@@ -23,6 +23,7 @@ namespace FBXLibrary
 		// Prepare the FBX SDK.
 		InitializeSdkObjects(lSdkManager, lScene);
 		// Load the scene
+		gScene = lScene;
 
 		// DLL can take a filename as an argument
 		FbxString lFilePath("");
@@ -306,6 +307,22 @@ namespace FBXLibrary
 				// Get the node and skeleton
 				FbxNode *lNode = lPose->GetNode(j);
 				FbxSkeleton *lSkeleton = lNode->GetSkeleton();
+
+				// Get mesh
+				FbxMesh* currMesh = lNode->GetMesh();
+				unsigned int ctrlPointCount = currMesh->GetControlPointsCount();
+
+				for (unsigned int i = 0; i < ctrlPointCount; i++)
+				{
+					CtrlPoint *tempCtrlPoint;
+					gSkeleton.pControlPoints.push_back(tempCtrlPoint);
+				}
+
+				// Procces control points
+				ProcessControlPoints(lNode);
+
+				// Constrct Animation Data
+				ProcessJointsAndAnimations(lNode);
 
 				// Check to see if the skeleton eixsts
 				// If it does then check to see if it's the root
@@ -3163,5 +3180,127 @@ namespace FBXLibrary
 		gSkeleton.pJoints[pJointIndex].pRotation_KeyTimes.assign(lR_Set.begin(), lR_Set.end());
 		gSkeleton.pJoints[pJointIndex].pScale_KeyTimes.assign(lS_Set.begin(), lS_Set.end());
 		gSkeleton.pJoints[pJointIndex].pAll_KeyTimes.assign(lAll_Set.begin(), lAll_Set.end());
+	}
+
+	unsigned int FBX_Functions::FindJointIndexUsingName(std::string currJointName)
+	{
+		unsigned int index = -1;
+
+		for (unsigned int i = 0; i < gSkeleton.pJoints.size(); i++)
+		{
+			if (gSkeleton.pJoints[i].pName == currJointName)
+				index = i;
+				break;
+		}
+
+		return index;
+	}
+
+	void FBX_Functions::ProcessControlPoints(FbxNode* inNode)
+	{
+		FbxMesh* currMesh = inNode->GetMesh();
+		unsigned int ctrlPointCount = currMesh->GetControlPointsCount();
+		for (unsigned int i = 0; i < ctrlPointCount; ++i)
+		{
+			CtrlPoint* currCtrlPoint = new CtrlPoint();
+			DirectX::XMFLOAT3 currPosition;
+			currPosition.x = static_cast<float>(currMesh->GetControlPointAt(i).mData[0]);
+			currPosition.y = static_cast<float>(currMesh->GetControlPointAt(i).mData[1]);
+			currPosition.z = static_cast<float>(currMesh->GetControlPointAt(i).mData[2]);
+			currCtrlPoint->pPosition = currPosition;
+			gSkeleton.pControlPoints[i] = currCtrlPoint;
+		}
+	}
+
+	void FBX_Functions::ProcessJointsAndAnimations(FbxNode* inNode)
+	{
+		FbxMesh* currMesh = inNode->GetMesh();
+		unsigned int numOfDeformers = currMesh->GetDeformerCount();
+		// This geometry transform is something I cannot understand
+		// I think it is from MotionBuilder
+		// If you are using Maya for your models, 99% this is just an
+		// identity matrix
+		// But I am taking it into account anyways......
+		FbxAMatrix geometryTransform =	GetGeometryTransformation(inNode);
+
+		// A deformer is a FBX thing, which contains some clusters
+		// A cluster contains a link, which is basically a joint
+		// Normally, there is only one deformer in a mesh
+		for (unsigned int deformerIndex = 0; deformerIndex < numOfDeformers; ++deformerIndex)
+		{
+			// There are many types of deformers in Maya,
+			// We are using only skins, so we see if this is a skin
+			FbxSkin* currSkin = reinterpret_cast<FbxSkin*>(currMesh->GetDeformer(deformerIndex, FbxDeformer::eSkin));
+			if (!currSkin)
+			{
+				continue;
+			}
+
+			unsigned int numOfClusters = currSkin->GetClusterCount();
+			for (unsigned int clusterIndex = 0; clusterIndex < numOfClusters; ++clusterIndex)
+			{
+				FbxCluster* currCluster = currSkin->GetCluster(clusterIndex);
+				std::string currJointName = currCluster->GetLink()->GetName();
+				unsigned int currJointIndex = FindJointIndexUsingName(currJointName);
+				FbxAMatrix transformMatrix;
+				FbxAMatrix transformLinkMatrix;
+				FbxAMatrix globalBindposeInverseMatrix;
+
+				currCluster->GetTransformMatrix(transformMatrix);	// The transformation of the mesh at binding time
+				currCluster->GetTransformLinkMatrix(transformLinkMatrix);	// The transformation of the cluster(joint) at binding time from joint space to world space
+				globalBindposeInverseMatrix = transformLinkMatrix.Inverse() * transformMatrix * geometryTransform;
+
+				// Update the information in mSkeleton 
+				//gSkeleton.pJoints[currJointIndex].mGlobalBindposeInverse = globalBindposeInverseMatrix;
+				// gSkeleton.pJoints[currJointIndex].mNode = currCluster->GetLink();
+
+				// Associate each joint with the control points it affects
+				unsigned int numOfIndices = currCluster->GetControlPointIndicesCount();
+				for (unsigned int i = 0; i < numOfIndices; ++i)
+				{
+					BlendingIndexWeightPair currBlendingIndexWeightPair;
+					currBlendingIndexWeightPair.pBlendingIndex = currJointIndex;
+					currBlendingIndexWeightPair.pBlendingWeight = currCluster->GetControlPointWeights()[i];
+					gSkeleton.pControlPoints[currCluster->GetControlPointIndices()[i]]->pBlendingInfo.push_back(currBlendingIndexWeightPair);
+				}
+
+				// Get animation information
+				// Now only supports one take
+				FbxAnimStack* currAnimStack = gScene->GetSrcObject<FbxAnimStack>(0);
+				FbxString animStackName = currAnimStack->GetName();
+				gSkeleton.pAnimationName = animStackName.Buffer();
+				FbxTakeInfo* takeInfo = gScene->GetTakeInfo(animStackName);
+				FbxTime start = takeInfo->mLocalTimeSpan.GetStart();
+				FbxTime end = takeInfo->mLocalTimeSpan.GetStop();
+				gSkeleton.pAnimationLength = end.GetFrameCount(FbxTime::eFrames24) - start.GetFrameCount(FbxTime::eFrames24) + 1;
+				//Keyframe** currAnim = &gSkeleton.mJoints[currJointIndex].mAnimation;
+
+				/*for (FbxLongLong i = start.GetFrameCount(FbxTime::eFrames24); i <= end.GetFrameCount(FbxTime::eFrames24); ++i)
+				{
+					FbxTime currTime;
+					currTime.SetFrame(i, FbxTime::eFrames24);
+					*currAnim = new Keyframe();
+					(*currAnim)->mFrameNum = i;
+					FbxAMatrix currentTransformOffset = inNode->EvaluateGlobalTransform(currTime) * geometryTransform;
+					(*currAnim)->mGlobalTransform = currentTransformOffset.Inverse() * currCluster->GetLink()->EvaluateGlobalTransform(currTime);
+					currAnim = &((*currAnim)->mNext);
+				}*/
+			}
+		}
+
+		// Some of the control points only have less than 4 joints
+		// affecting them.
+		// For a normal renderer, there are usually 4 joints
+		// I am adding more dummy joints if there isn't enough
+		BlendingIndexWeightPair currBlendingIndexWeightPair;
+		currBlendingIndexWeightPair.pBlendingIndex = 0;
+		currBlendingIndexWeightPair.pBlendingWeight = 0;
+		/*for (auto itr = gSkeleton.pControlPoints.begin(); itr != gSkeleton.pControlPoints.end(); ++itr)
+		{
+			for (unsigned int i = itr->pBlendingInfo.size(); i <= 4; ++i)
+			{
+				itr->pBlendingInfo.push_back(currBlendingIndexWeightPair);
+			}
+		}*/
 	}
 }

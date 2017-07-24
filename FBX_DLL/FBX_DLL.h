@@ -12,6 +12,7 @@ namespace FBXLibrary
 	private:
 		Skeleton gSkeleton;
 		Mesh gMesh;
+		FbxScene *gScene;
 
 	public:
 		FBX_Functions(void);
@@ -65,6 +66,10 @@ namespace FBXLibrary
 		void DisplayCurveKeys(FbxAnimCurve* pCurve);
 		void DisplayCurveKeys(FbxAnimCurve* pCurve, FbxNode* pNode, Vertex_Part pVertex_Part, Vertex_Part_Data pVertex_Part_Data, int pJointIndex);
 		void DisplayListCurveKeys(FbxAnimCurve* pCurve, FbxProperty* pProperty);
+		void ProcessJointsAndAnimations(FbxNode* inNode);
+		unsigned int FindJointIndexUsingName(std::string currJointName);
+		void ProcessControlPoints(FbxNode* inNode);
+
 
 		// Personal functions for looping through skeleton hierarchy
 		void ProcessSkeletonHierarchy(FbxNode* pRootNode);

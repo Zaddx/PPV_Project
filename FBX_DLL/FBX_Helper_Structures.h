@@ -7,6 +7,18 @@
 enum Vertex_Part { TRANSLATION = 0, ROTATION = 1, SCALE = 2 };
 enum Vertex_Part_Data { X = 0, Y = 1, Z = 2 };
 
+struct BlendingIndexWeightPair
+{
+	unsigned int pBlendingIndex;
+	unsigned int pBlendingWeight;
+};
+
+struct CtrlPoint
+{
+	DirectX::XMFLOAT3 pPosition;
+	std::vector<BlendingIndexWeightPair> pBlendingInfo;
+};
+
 // Holds the individual data of a keyframe vertex
 struct Keyframe_Vertex_Info
 {
@@ -48,7 +60,6 @@ struct Joint
 	// Stuff for animation
 	std::vector<Keyframe_Info> pKeyframes;		// Each joint has it's own keyframes
 	Keyframe_Vertex_Info_Vector pVertex_Info_Vector;	// Holds the vertices infos
-	double pAnimationDuration;					// Duration of the animation
 	std::vector<int> pTranslation_KeyTimes;				// Vector of Translation keytimes
 	std::vector<int> pRotation_KeyTimes;				// Vector of Rotation keytimes
 	std::vector<int> pScale_KeyTimes;					// Vector of Scale keytimes
@@ -92,6 +103,9 @@ struct Skeleton
 	std::vector<Joint> pJoints;
 	std::vector<Bone> pBones;	// Optional
 	std::string pName;
+	std::string pAnimationName;
+	double pAnimationLength;
+	std::vector<CtrlPoint*> pControlPoints;
 
 	Mesh pMesh;
 };
