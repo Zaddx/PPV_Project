@@ -19,25 +19,26 @@ struct CtrlPoint
 	std::vector<BlendingIndexWeightPair> pBlendingInfo;
 };
 
-// Holds the individual data of a keyframe vertex
-struct Keyframe_Vertex_Info
+// Holds the vertex of the Keyframe
+struct Keyframe_Vertex
 {
 	int pKeytime;		// To hold the keytime
-	float pVal;			// To hold the data 
+
 	Vertex_Part pValueType;				// 0 = Trans, 1 = Rot, 2 = Scale
 	Vertex_Part_Data pValueIndex;		// 0 = X, 1 = Y, 2 = Z
+
+	DirectX::XMMATRIX pMatrix;
+	DirectX::XMFLOAT4 pPosition;
+	DirectX::XMFLOAT4 pXAxis;
+	DirectX::XMFLOAT4 pYAxis;
+	DirectX::XMFLOAT4 pZAxis;
 };
 
 struct Keyframe_Vertex_Info_Vector
 {
-	std::vector<Keyframe_Vertex_Info> pVertex_Infos;
+	std::vector<Keyframe_Vertex> pVertices;
 };
 
-// Holds the vertex of the Keyframe
-struct Keyframe_Vertex
-{
-	Keyframe_Vertex_Info pX, pY, pZ;
-};
 
 struct Keyframe_Info
 {
@@ -66,9 +67,9 @@ struct Joint
 	std::vector<int> pAll_KeyTimes;						// Vector of all keytimes
 
 	// Stuff for function use
-	std::vector<Keyframe_Vertex_Info> pTranslation_Infos;
-	std::vector<Keyframe_Vertex_Info> pRotation_Infos;
-	std::vector<Keyframe_Vertex_Info> pScale_Infos;
+	std::vector<Keyframe_Vertex> pTranslation_Vertices;
+	std::vector<Keyframe_Vertex> pRotation_Vertices;
+	std::vector<Keyframe_Vertex> pScale_Vertices;
 };
 
 // Dont really need bone structure since 

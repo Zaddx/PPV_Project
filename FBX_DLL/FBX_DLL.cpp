@@ -2776,7 +2776,7 @@ namespace FBXLibrary
 		for (lCount = 0; lCount < lKeyCount; lCount++)
 		{
 			// Keyframe that will be filled out and passed into the joint
-			Keyframe_Vertex_Info lKeyframe_Vertex_Info;
+			Keyframe_Vertex lKeyframe_Vertex_Info;
 
 			lKeyValue = static_cast<float>(pCurve->KeyGetValue(lCount));
 			lKeyTime = pCurve->KeyGetTime(lCount);
@@ -2795,14 +2795,29 @@ namespace FBXLibrary
 			{
 				// Check to see what we should be putting the info into
 				lKeyframe_Vertex_Info.pKeytime = atoi(lKeyTime.GetTimeString(lTimeString, FbxUShort(256)));
-				lKeyframe_Vertex_Info.pVal = lKeyValue;
-				//lKeyframe_Vertex_Info.pVal = *pNode->EvaluateGlobalTransform().Buffer()->mData;
+
 				// Fill out the valuetype and valueindex of the info
 				lKeyframe_Vertex_Info.pValueType = pVertex_Part;
 				lKeyframe_Vertex_Info.pValueIndex = pVertex_Part_Data;
 
+				// Fill out the Matrix, Position, X/Y/Z Axis
+				FbxVector4 lXaxis = pNode->EvaluateGlobalTransform().GetRow(0);
+				FbxVector4 lYaxis = pNode->EvaluateGlobalTransform().GetRow(1);
+				FbxVector4 lZaxis = pNode->EvaluateGlobalTransform().GetRow(2);
+				FbxVector4 lPosition = pNode->EvaluateGlobalTransform().GetRow(3);
+
+				lKeyframe_Vertex_Info.pXAxis = DirectX::XMFLOAT4(lXaxis[0], lXaxis[1], lXaxis[2], lXaxis[3]);
+				lKeyframe_Vertex_Info.pYAxis = DirectX::XMFLOAT4(lYaxis[0], lYaxis[1], lYaxis[2], lYaxis[3]);
+				lKeyframe_Vertex_Info.pZAxis = DirectX::XMFLOAT4(lZaxis[0], lZaxis[1], lZaxis[2], lZaxis[3]);
+				lKeyframe_Vertex_Info.pPosition = DirectX::XMFLOAT4(lPosition[0], lPosition[1], lPosition[2], lPosition[3]);
+
+				lKeyframe_Vertex_Info.pMatrix = DirectX::XMMATRIX(lXaxis[0], lXaxis[1], lXaxis[2], lXaxis[3],
+																  lYaxis[0], lYaxis[1], lYaxis[2], lYaxis[3],
+																  lZaxis[0], lZaxis[1], lZaxis[2], lZaxis[3],
+																  lPosition[0], lPosition[1], lPosition[2], lPosition[3]);
+
 				// Push back the keyframe info
-				gSkeleton.pJoints[pJointIndex].pVertex_Info_Vector.pVertex_Infos.push_back(lKeyframe_Vertex_Info);
+				gSkeleton.pJoints[pJointIndex].pVertex_Info_Vector.pVertices.push_back(lKeyframe_Vertex_Info);
 			}
 
 			if ((pCurve->KeyGetInterpolation(lCount)&FbxAnimCurveDef::eInterpolationConstant) == FbxAnimCurveDef::eInterpolationConstant)
@@ -2863,12 +2878,12 @@ namespace FBXLibrary
 			Joint lCurrJoint = gSkeleton.pJoints[i];
 
 			// Get current vertex infos
-			std::vector<Keyframe_Vertex_Info> lCurrVertex_Infos = lCurrJoint.pVertex_Info_Vector.pVertex_Infos;
+			std::vector<Keyframe_Vertex> lCurrVertex_Infos = lCurrJoint.pVertex_Info_Vector.pVertices;
 
 			// Create Info Vectors for Trans, Rot, Scale
-			std::vector<Keyframe_Vertex_Info> lTranslation_Infos;
-			std::vector<Keyframe_Vertex_Info> lRotation_Infos;
-			std::vector<Keyframe_Vertex_Info> lScale_Infos;
+			std::vector<Keyframe_Vertex> lTranslation_Infos;
+			std::vector<Keyframe_Vertex> lRotation_Infos;
+			std::vector<Keyframe_Vertex> lScale_Infos;
 
 			// Create a keyframe vertex
 			Keyframe_Vertex lKeyframeVertex;
@@ -2878,7 +2893,7 @@ namespace FBXLibrary
 			for (unsigned j = 0; j < lCurrVertex_Infos.size(); j++)
 			{
 				// Current Vertex Info
-				Keyframe_Vertex_Info lCurrVertex_Info = lCurrVertex_Infos[j];
+				Keyframe_Vertex lCurrVertex_Info = lCurrVertex_Infos[j];
 
 				switch (lCurrVertex_Info.pValueType)
 				{
@@ -2921,9 +2936,9 @@ namespace FBXLibrary
 			}
 
 			// Set joint infos
-			gSkeleton.pJoints[i].pTranslation_Infos = lTranslation_Infos;
-			gSkeleton.pJoints[i].pRotation_Infos = lRotation_Infos;
-			gSkeleton.pJoints[i].pScale_Infos = lScale_Infos;
+			gSkeleton.pJoints[i].pTranslation_Vertices = lTranslation_Infos;
+			gSkeleton.pJoints[i].pRotation_Vertices = lRotation_Infos;
+			gSkeleton.pJoints[i].pScale_Vertices = lScale_Infos;
 
 			// Get all keytimes for later use
 			FillOutJointKeyTimes(i);
@@ -2957,7 +2972,7 @@ namespace FBXLibrary
 
 	}
 
-	int FBX_Functions::LargestKeyTime(std::vector<Keyframe_Vertex_Info> pKeyframe_Infos)
+	int FBX_Functions::LargestKeyTime(std::vector<Keyframe_Vertex> pKeyframe_Infos)
 	{
 		int lMaxKeyTime = 0;
 
@@ -2967,7 +2982,7 @@ namespace FBXLibrary
 		return lMaxKeyTime;
 	}
 
-	int FBX_Functions::CompareKeyTime(Keyframe_Vertex_Info pA, Keyframe_Vertex_Info pB)
+	int FBX_Functions::CompareKeyTime(Keyframe_Vertex pA, Keyframe_Vertex pB)
 	{
 		int lBiggestKeyTime = 0;
 
@@ -2987,36 +3002,57 @@ namespace FBXLibrary
 		Keyframe_Vertex lTemp;
 
 		// Fill out the keytime of the vertex
-		lTemp.pX.pKeytime = (pA.pX.pKeytime + pB.pX.pKeytime) / 2;
-		lTemp.pY.pKeytime = (pA.pY.pKeytime + pB.pY.pKeytime) / 2;
-		lTemp.pZ.pKeytime = (pA.pZ.pKeytime + pB.pZ.pKeytime) / 2;
+		lTemp.pKeytime = (pA.pKeytime + pB.pKeytime) / 2;
 
-		// Fill out the value of the vertex
-		lTemp.pX.pVal = (pB.pX.pVal - pA.pX.pVal) * pRatio;
-		lTemp.pY.pVal = (pB.pY.pVal - pA.pY.pVal) * pRatio;
-		lTemp.pZ.pVal = (pB.pZ.pVal - pA.pZ.pVal) * pRatio;
+		// Fill out the new position of the vertex
+		lTemp.pPosition.x = pA.pPosition.x + pRatio * (pB.pPosition.x - pA.pPosition.x);
+		lTemp.pPosition.y = pA.pPosition.x + pRatio * (pB.pPosition.y - pA.pPosition.y);
+		lTemp.pPosition.z = pA.pPosition.x + pRatio * (pB.pPosition.z - pA.pPosition.z);
+		lTemp.pPosition.w = pA.pPosition.x + pRatio * (pB.pPosition.w - pA.pPosition.w);
+
+		// Fill out the new xaxis of the vertex
+		lTemp.pXAxis.x = pA.pXAxis.x + pRatio * (pB.pXAxis.x - pA.pXAxis.x);
+		lTemp.pXAxis.y = pA.pXAxis.x + pRatio * (pB.pXAxis.y - pA.pXAxis.y);
+		lTemp.pXAxis.z = pA.pXAxis.x + pRatio * (pB.pXAxis.z - pA.pXAxis.z);
+		lTemp.pXAxis.w = pA.pXAxis.x + pRatio * (pB.pXAxis.w - pA.pXAxis.w);
+
+		// Fill out the new xayis of the vertex
+		lTemp.pYAxis.x = pA.pYAxis.x + pRatio * (pB.pYAxis.x - pA.pYAxis.x);
+		lTemp.pYAxis.y = pA.pYAxis.x + pRatio * (pB.pYAxis.y - pA.pYAxis.y);
+		lTemp.pYAxis.z = pA.pYAxis.x + pRatio * (pB.pYAxis.z - pA.pYAxis.z);
+		lTemp.pYAxis.w = pA.pYAxis.x + pRatio * (pB.pYAxis.w - pA.pYAxis.w);
+
+		// Fill out the new xazis of the vertex
+		lTemp.pZAxis.x = pA.pZAxis.x + pRatio * (pB.pZAxis.x - pA.pZAxis.x);
+		lTemp.pZAxis.y = pA.pZAxis.x + pRatio * (pB.pZAxis.y - pA.pZAxis.y);
+		lTemp.pZAxis.z = pA.pZAxis.x + pRatio * (pB.pZAxis.z - pA.pZAxis.z);
+		lTemp.pZAxis.w = pA.pZAxis.x + pRatio * (pB.pZAxis.w - pA.pZAxis.w);
+
+		// Fill out the new matrix of the vertex
+		DirectX::XMVECTOR lXAxis = DirectX::XMVectorSet(lTemp.pXAxis.x, lTemp.pXAxis.y, lTemp.pXAxis.z, lTemp.pXAxis.w);
+		DirectX::XMVECTOR lYAxis = DirectX::XMVectorSet(lTemp.pYAxis.x, lTemp.pYAxis.y, lTemp.pYAxis.z, lTemp.pYAxis.w);
+		DirectX::XMVECTOR lZAxis = DirectX::XMVectorSet(lTemp.pZAxis.x, lTemp.pZAxis.y, lTemp.pZAxis.z, lTemp.pZAxis.w);
+		DirectX::XMVECTOR lPosition = DirectX::XMVectorSet(lTemp.pPosition.x, lTemp.pPosition.y, lTemp.pPosition.z, lTemp.pPosition.w);
+
+		lTemp.pMatrix = DirectX::XMMATRIX(lXAxis, lYAxis, lZAxis, lPosition);
 
 		// Fill out the vertex part
-		lTemp.pX.pValueType = pA.pX.pValueType;
-		lTemp.pY.pValueType = pA.pY.pValueType;
-		lTemp.pZ.pValueType = pA.pZ.pValueType;
+		lTemp.pValueType = pA.pValueType;
 
 		// FIll out the vertex part data
-		lTemp.pX.pValueIndex = X;
-		lTemp.pY.pValueIndex = Y;
-		lTemp.pZ.pValueIndex = Z;
+		lTemp.pValueIndex = X;
 
 		// Return the newly interpolate vertex
 		return lTemp;
 	}
 
-	Keyframe_Vertex FBX_Functions::GetDataAtKeyTime(std::vector<Keyframe_Vertex_Info> pKeyframe_Infos, std::vector<int> pKeytimes, int pKeyTime)
+	Keyframe_Vertex FBX_Functions::GetDataAtKeyTime(std::vector<Keyframe_Vertex> pKeyframe_Vertex, std::vector<int> pKeytimes, int pKeyTime)
 	{
 		// Create a Vertex to hold data
 		Keyframe_Vertex lTemp_Vertex;
 
 		// Create variable to hold vector size
-		unsigned int lSize = pKeyframe_Infos.size();
+		unsigned int lSize = pKeyframe_Vertex.size();
 		unsigned int lK_Size = pKeytimes.size();
 
 		// Create bool to see if the keytime exists
@@ -3076,18 +3112,18 @@ namespace FBXLibrary
 		{
 			// Loop through for each X
 			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Infos[i].pKeytime == pKeyTime && pKeyframe_Infos[i].pValueIndex == X)
-					lTemp_Vertex.pX = pKeyframe_Infos[i];
+				if (pKeyframe_Vertex[i].pKeytime == pKeyTime && pKeyframe_Vertex[i].pValueIndex == X)
+					lTemp_Vertex = pKeyframe_Vertex[i];
 
 			// Loop through for each Y
 			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Infos[i].pKeytime == pKeyTime && pKeyframe_Infos[i].pValueIndex == Y)
-					lTemp_Vertex.pY = pKeyframe_Infos[i];
+				if (pKeyframe_Vertex[i].pKeytime == pKeyTime && pKeyframe_Vertex[i].pValueIndex == Y)
+					lTemp_Vertex = pKeyframe_Vertex[i];
 
 			// Loop through for each Z
 			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Infos[i].pKeytime == pKeyTime && pKeyframe_Infos[i].pValueIndex == Z)
-					lTemp_Vertex.pZ = pKeyframe_Infos[i];
+				if (pKeyframe_Vertex[i].pKeytime == pKeyTime && pKeyframe_Vertex[i].pValueIndex == Z)
+					lTemp_Vertex = pKeyframe_Vertex[i];
 		}
 		else
 		{
@@ -3099,34 +3135,34 @@ namespace FBXLibrary
 			// Fill out the prev vertex
 			// Loop through for each X
 			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Infos[i].pKeytime == lPrev_Keytime && pKeyframe_Infos[i].pValueIndex == X)
-					lPrev_Vertex.pX = pKeyframe_Infos[i];
+				if (pKeyframe_Vertex[i].pKeytime == lPrev_Keytime && pKeyframe_Vertex[i].pValueIndex == X)
+					lPrev_Vertex = pKeyframe_Vertex[i];
 
 			// Loop through for each Y
 			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Infos[i].pKeytime == lPrev_Keytime && pKeyframe_Infos[i].pValueIndex == Y)
-					lPrev_Vertex.pY = pKeyframe_Infos[i];
+				if (pKeyframe_Vertex[i].pKeytime == lPrev_Keytime && pKeyframe_Vertex[i].pValueIndex == Y)
+					lPrev_Vertex = pKeyframe_Vertex[i];
 
 			// Loop through for each Z
 			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Infos[i].pKeytime == lPrev_Keytime && pKeyframe_Infos[i].pValueIndex == Z)
-					lPrev_Vertex.pZ = pKeyframe_Infos[i];
+				if (pKeyframe_Vertex[i].pKeytime == lPrev_Keytime && pKeyframe_Vertex[i].pValueIndex == Z)
+					lPrev_Vertex = pKeyframe_Vertex[i];
 
 			// Fill out the next vertex
 			// Loop through for each X
 			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Infos[i].pKeytime == lNext_Keytime && pKeyframe_Infos[i].pValueIndex == X)
-					lNext_Vertex.pX = pKeyframe_Infos[i];
+				if (pKeyframe_Vertex[i].pKeytime == lNext_Keytime && pKeyframe_Vertex[i].pValueIndex == X)
+					lNext_Vertex = pKeyframe_Vertex[i];
 
 			// Loop through for each Y
 			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Infos[i].pKeytime == lNext_Keytime && pKeyframe_Infos[i].pValueIndex == Y)
-					lNext_Vertex.pY = pKeyframe_Infos[i];
+				if (pKeyframe_Vertex[i].pKeytime == lNext_Keytime && pKeyframe_Vertex[i].pValueIndex == Y)
+					lNext_Vertex = pKeyframe_Vertex[i];
 
 			// Loop through for each Z
 			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Infos[i].pKeytime == lNext_Keytime && pKeyframe_Infos[i].pValueIndex == Z)
-					lNext_Vertex.pZ = pKeyframe_Infos[i];
+				if (pKeyframe_Vertex[i].pKeytime == lNext_Keytime && pKeyframe_Vertex[i].pValueIndex == Z)
+					lNext_Vertex = pKeyframe_Vertex[i];
 
 			// Interpolate between the prev -> next
 			lLerp_Vertex = VertexInterpolation(lPrev_Vertex, lNext_Vertex, 0.5f);
@@ -3148,29 +3184,29 @@ namespace FBXLibrary
 		std::set<int> lAll_Set;
 
 		// Get the sizes of the key time vectors
-		unsigned int lT_Size = gSkeleton.pJoints[pJointIndex].pTranslation_Infos.size();
-		unsigned int lR_Size = gSkeleton.pJoints[pJointIndex].pRotation_Infos.size();
-		unsigned int lS_Size = gSkeleton.pJoints[pJointIndex].pScale_Infos.size();
+		unsigned int lT_Size = gSkeleton.pJoints[pJointIndex].pTranslation_Vertices.size();
+		unsigned int lR_Size = gSkeleton.pJoints[pJointIndex].pRotation_Vertices.size();
+		unsigned int lS_Size = gSkeleton.pJoints[pJointIndex].pScale_Vertices.size();
 
 		// Fill out the set for translation
 		for (unsigned i = 0; i < lT_Size; ++i)
 		{
-			lT_Set.insert(gSkeleton.pJoints[pJointIndex].pTranslation_Infos[i].pKeytime);
-			lAll_Set.insert(gSkeleton.pJoints[pJointIndex].pTranslation_Infos[i].pKeytime);
+			lT_Set.insert(gSkeleton.pJoints[pJointIndex].pTranslation_Vertices[i].pKeytime);
+			lAll_Set.insert(gSkeleton.pJoints[pJointIndex].pTranslation_Vertices[i].pKeytime);
 		}
 		// Fill out the set for rotation
 		for (unsigned i = 0; i < lR_Size; ++i)
 		{
-			lR_Set.insert(gSkeleton.pJoints[pJointIndex].pRotation_Infos[i].pKeytime);
-			lAll_Set.insert(gSkeleton.pJoints[pJointIndex].pRotation_Infos[i].pKeytime);
+			lR_Set.insert(gSkeleton.pJoints[pJointIndex].pRotation_Vertices[i].pKeytime);
+			lAll_Set.insert(gSkeleton.pJoints[pJointIndex].pRotation_Vertices[i].pKeytime);
 		}
 		// Fill out the set for scale
 		for (unsigned i = 0; i < lS_Size; ++i)
 		{
-			lS_Set.insert(gSkeleton.pJoints[pJointIndex].pScale_Infos[i].pKeytime);
-			lAll_Set.insert(gSkeleton.pJoints[pJointIndex].pScale_Infos[i].pKeytime);
+			lS_Set.insert(gSkeleton.pJoints[pJointIndex].pScale_Vertices[i].pKeytime);
+			lAll_Set.insert(gSkeleton.pJoints[pJointIndex].pScale_Vertices[i].pKeytime);
 		}
-		
+
 
 		// Assign the sets to the keytime vectors of the joint
 		gSkeleton.pJoints[pJointIndex].pTranslation_KeyTimes.assign(lT_Set.begin(), lT_Set.end());
@@ -3187,7 +3223,7 @@ namespace FBXLibrary
 		{
 			if (gSkeleton.pJoints[i].pName == currJointName)
 				index = i;
-				break;
+			break;
 		}
 
 		return index;
@@ -3218,7 +3254,7 @@ namespace FBXLibrary
 		// If you are using Maya for your models, 99% this is just an
 		// identity matrix
 		// But I am taking it into account anyways......
-		FbxAMatrix geometryTransform =	GetGeometryTransformation(inNode);
+		FbxAMatrix geometryTransform = GetGeometryTransformation(inNode);
 
 		// A deformer is a FBX thing, which contains some clusters
 		// A cluster contains a link, which is basically a joint
