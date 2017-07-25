@@ -308,22 +308,6 @@ namespace FBXLibrary
 				FbxNode *lNode = lPose->GetNode(j);
 				FbxSkeleton *lSkeleton = lNode->GetSkeleton();
 
-				// Get mesh
-				FbxMesh* currMesh = lNode->GetMesh();
-				unsigned int ctrlPointCount = currMesh->GetControlPointsCount();
-
-				for (unsigned int i = 0; i < ctrlPointCount; i++)
-				{
-					CtrlPoint *tempCtrlPoint;
-					gSkeleton.pControlPoints.push_back(tempCtrlPoint);
-				}
-
-				// Procces control points
-				ProcessControlPoints(lNode);
-
-				// Constrct Animation Data
-				ProcessJointsAndAnimations(lNode);
-
 				// Check to see if the skeleton eixsts
 				// If it does then check to see if it's the root
 				if (lSkeleton)
@@ -2958,6 +2942,7 @@ namespace FBXLibrary
 				gSkeleton.pJoints[i].pKeyframes[l].pScale = lScale_Vertex;
 			}
 		}
+
 	}
 
 	int FBX_Functions::LargestKeyTime(std::vector<Keyframe_Vertex_Info> pKeyframe_Infos)
@@ -3295,12 +3280,12 @@ namespace FBXLibrary
 		BlendingIndexWeightPair currBlendingIndexWeightPair;
 		currBlendingIndexWeightPair.pBlendingIndex = 0;
 		currBlendingIndexWeightPair.pBlendingWeight = 0;
-		/*for (auto itr = gSkeleton.pControlPoints.begin(); itr != gSkeleton.pControlPoints.end(); ++itr)
+		for (auto itr = 0; itr != gSkeleton.pControlPoints.size(); ++itr)
 		{
-			for (unsigned int i = itr->pBlendingInfo.size(); i <= 4; ++i)
+			for (unsigned int i = gSkeleton.pControlPoints[itr]->pBlendingInfo.size(); i <= 4; ++i)
 			{
-				itr->pBlendingInfo.push_back(currBlendingIndexWeightPair);
+				gSkeleton.pControlPoints[itr]->pBlendingInfo.push_back(currBlendingIndexWeightPair);
 			}
-		}*/
+		}
 	}
 }

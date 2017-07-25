@@ -70,7 +70,6 @@ namespace FBXLibrary
 		unsigned int FindJointIndexUsingName(std::string currJointName);
 		void ProcessControlPoints(FbxNode* inNode);
 
-
 		// Personal functions for looping through skeleton hierarchy
 		void ProcessSkeletonHierarchy(FbxNode* pRootNode);
 		void ProcessSkeletonHierarchyRecursively(FbxNode* pInNode, int pInDepth, int pMyIndex, int pInParentIndex);
