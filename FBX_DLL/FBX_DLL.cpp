@@ -1007,6 +1007,12 @@ namespace FBXLibrary
 		int i, lControlPointsCount = pMesh->GetControlPointsCount();
 		FbxVector4* lControlPoints = pMesh->GetControlPoints();
 
+		for (unsigned int i = 0; i < lControlPointsCount; i++)
+		{
+			CtrlPoint tempCtrlPont;
+			gSkeleton.pControlPoints.push_back(&tempCtrlPont);
+		}
+
 		DisplayString("    Control Points");
 
 		for (i = 0; i < lControlPointsCount; i++)
@@ -1594,6 +1600,12 @@ namespace FBXLibrary
 		DisplayShape(lMesh);
 
 		DisplayCache(lMesh);
+
+		// Procces control points
+		ProcessControlPoints(pNode);
+
+		// Constrct Animation Data
+		ProcessJointsAndAnimations(pNode);
 	}
 
 	void FBX_Functions::DisplayMetaDataConnections(FbxObject* pObject)
