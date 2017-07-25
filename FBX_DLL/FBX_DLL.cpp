@@ -999,6 +999,9 @@ namespace FBXLibrary
 		// Construct Keyframes before giving skeleton
 		ConstructKeyFrames();
 
+		// Get rid of all duplicate vertices
+		ConstructUniqueVertices();
+
 		return &gSkeleton;
 	}
 
@@ -3335,5 +3338,10 @@ namespace FBXLibrary
 				gSkeleton.pControlPoints[itr]->pBlendingInfo.push_back(currBlendingIndexWeightPair);
 			}
 		}
+	}
+
+	void FBX_Functions::ConstructUniqueVertices()
+	{
+
 	}
 }
