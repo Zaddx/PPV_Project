@@ -3342,6 +3342,8 @@ namespace FBXLibrary
 
 	void FBX_Functions::ConstructUniqueVertices()
 	{
+		std::set<Mesh_Vertex> lUnique_Vertices;
 
+		// Check to see if !(a < b) && !(b < a)
 	}
 }
