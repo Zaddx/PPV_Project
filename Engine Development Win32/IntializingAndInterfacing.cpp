@@ -278,7 +278,7 @@ bool Init_and_Inter::InitScene(User_Input &_input)
 		XMFLOAT3 pPosition = XMFLOAT3(gMageSkeleton->pJoints[i].pPosition.x, gMageSkeleton->pJoints[i].pPosition.y, gMageSkeleton->pJoints[i].pPosition.z);
 		XMFLOAT3 pXAxis = XMFLOAT3(gMageSkeleton->pJoints[i].pXAxis.x, gMageSkeleton->pJoints[i].pXAxis.y, gMageSkeleton->pJoints[i].pXAxis.z);
 		XMFLOAT3 pYAxis = XMFLOAT3(gMageSkeleton->pJoints[i].pYAxis.x, gMageSkeleton->pJoints[i].pYAxis.y, gMageSkeleton->pJoints[i].pYAxis.z);
-		XMFLOAT3 pZAxis = XMFLOAT3(gMageSkeleton->pJoints[i].pZAxis.x, gMageSkeleton->pJoints[i].pZAxis.y, gMageSkeleton->pJoints[i].pZAxis.z);
+		XMFLOAT3 pZAxis = XMFLOAT3(gMageSkeleton->pJoints[i].pZAxis.x, gMageSkeleton->pJoints[i].pZAxis.y, gMageSkeleton->pJoints[i].pZAxis.z); 
 
 		// Add lines to the debug renderer
 		// Draw X axis in red
