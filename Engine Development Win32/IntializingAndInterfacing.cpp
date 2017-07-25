@@ -1037,6 +1037,7 @@ void User_Input::DetectInput(double time, Init_and_Inter& _initializer, HWND hWn
 	SHORT lF1KeyState = GetAsyncKeyState(VK_F1);	  // F1 Key
 	SHORT lF2KeyState = GetAsyncKeyState(VK_F2);	  // F2 Key
 	SHORT lF3KeyState = GetAsyncKeyState(VK_F3);	  // F3 Key
+	SHORT lEnterKeyState = GetAsyncKeyState(VK_RETURN);		// Enter Key
 
 	if ((1 << 15) & lEscKeyState)
 		PostMessage(hWnd, WM_CLOSE, 0, 0);
@@ -1148,6 +1149,11 @@ void User_Input::DetectInput(double time, Init_and_Inter& _initializer, HWND hWn
 			gKeyframeIndex = 0;
 
 		// std::cout << "KeyFrameIndex: " << gKeyframeIndex << " \n";
+	}
+
+	if ((1 << 15) & lEnterKeyState)
+	{
+		std::cout << "Current Keyframe Index: " << gKeyframeIndex << " \n";
 	}
 
 	//mouseLastState = mouseCurrState;
