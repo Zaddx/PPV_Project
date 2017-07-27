@@ -10,7 +10,7 @@ enum Vertex_Part_Data { X = 0, Y = 1, Z = 2 };
 struct BlendingIndexWeightPair
 {
 	unsigned int pBlendingIndex;
-	unsigned int pBlendingWeight;
+	float pBlendingWeight;
 };
 
 struct CtrlPoint

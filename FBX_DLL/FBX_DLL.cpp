@@ -3267,7 +3267,8 @@ namespace FBXLibrary
 				for (unsigned int i = 0; i < numOfIndices; ++i)
 				{
 					BlendingIndexWeightPair currBlendingIndexWeightPair;
-					currBlendingIndexWeightPair.pBlendingIndex = currJointIndex;
+					//currBlendingIndexWeightPair.pBlendingIndex = currJointIndex;
+					currBlendingIndexWeightPair.pBlendingIndex = currCluster->GetControlPointIndices()[i];
 					currBlendingIndexWeightPair.pBlendingWeight = currCluster->GetControlPointWeights()[i];
 					gSkeleton.pControlPoints[currCluster->GetControlPointIndices()[i]]->pBlendingInfo.push_back(currBlendingIndexWeightPair);
 				}
@@ -3299,17 +3300,16 @@ namespace FBXLibrary
 		// Some of the control points only have less than 4 joints
 		// affecting them.
 		// For a normal renderer, there are usually 4 joints
-		// I am adding more dummy joints if there isn't enough
-		BlendingIndexWeightPair currBlendingIndexWeightPair;
-		currBlendingIndexWeightPair.pBlendingIndex = 0;
-		currBlendingIndexWeightPair.pBlendingWeight = 0;
-		for (auto itr = 0; itr != gSkeleton.pControlPoints.size(); ++itr)
-		{
-			for (unsigned int i = gSkeleton.pControlPoints[itr]->pBlendingInfo.size(); i <= 4; ++i)
-			{
-				gSkeleton.pControlPoints[itr]->pBlendingInfo.push_back(currBlendingIndexWeightPair);
-			}
-		}
+		//BlendingIndexWeightPair currBlendingIndexWeightPair;
+		//currBlendingIndexWeightPair.pBlendingIndex = 0;
+		//currBlendingIndexWeightPair.pBlendingWeight = 0;
+		//for (auto itr = 0; itr != gSkeleton.pControlPoints.size(); ++itr)
+		//{
+		//	for (unsigned int i = gSkeleton.pControlPoints[itr]->pBlendingInfo.size(); i <= 4; ++i)
+		//	{
+		//		gSkeleton.pControlPoints[itr]->pBlendingInfo.push_back(currBlendingIndexWeightPair);
+		//	}
+		//}
 	}
 
 	bool Mesh_Vertex_EQ(const Mesh_Vertex& lhs, const Mesh_Vertex& rhs)
