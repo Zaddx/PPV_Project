@@ -84,11 +84,6 @@ struct Mesh_Vertex
 	DirectX::XMFLOAT4 pPosition;
 	DirectX::XMFLOAT2 pUV;
 	DirectX::XMFLOAT3 pNormal;
-
-	bool operator<(const Mesh_Vertex& other) const
-	{
-
-	}
 };
 
 struct Mesh_Polygon

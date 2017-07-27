@@ -3312,12 +3312,21 @@ namespace FBXLibrary
 		}
 	}
 
+	bool Mesh_Vertex_EQ(const Mesh_Vertex& lhs, const Mesh_Vertex& rhs)
+	{
+		return lhs.pPosition.x == rhs.pPosition.x && lhs.pPosition.y == rhs.pPosition.y && lhs.pPosition.z == rhs.pPosition.z &&
+			lhs.pNormal.x == rhs.pNormal.x && lhs.pNormal.y == rhs.pNormal.y &&lhs.pNormal.z == rhs.pNormal.z &&
+			lhs.pUV.x == rhs.pUV.x && lhs.pUV.y == rhs.pUV.y;
+	}
+
 	void FBX_Functions::ConstructUniqueVertices()
 	{
-		std::vector<Mesh_Vertex> pUnique_Vertices;
-		std::vector<Mesh_Vertex> pVertices_Copy;
+		std::vector<Mesh_Vertex> pUnique_Vertices = gSkeleton.pMesh.pVertices;
 
-
+		std::vector<Mesh_Vertex>::iterator it = std::unique(pUnique_Vertices.begin(), pUnique_Vertices.end(), Mesh_Vertex_EQ);
+		pUnique_Vertices.erase(it, pUnique_Vertices.end());
+		
+		gSkeleton.pMesh.pVertices = pUnique_Vertices;
 	}
 
 	void FBX_Functions::ConstructKeyTimes()
