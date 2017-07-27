@@ -364,9 +364,22 @@ bool Init_and_Inter::InitScene(User_Input &_input)
 	hr = d3d11Device->CreateBuffer(&mage_cbbd, NULL, &cbPerObjectBuffer);
 
 	// Fill out the gAnimated_Mesh_CB
-	// Loop through joints and put them ino the joints xmfloat4 array
-	//for (unsigned int i = 0; i < gMageSkeleton->pJoints.size(); i++)
-	//	gAnimated_Mesh_CB.joints[i] = gMageSkeleton->pJoints[i];
+	// Loop through joints and put them ino the animation data xmfloat4 array
+	int arrayIndex = 0;
+	for (unsigned int i = 0; i < gMageSkeleton->pJoints.size(); i++)
+	{
+		for (unsigned int j = 0; j < gMageSkeleton->pJoints[i].pAll_KeyTimes.size(); j++)
+		{
+			int keyFrameIndex = gMageSkeleton->pJoints[i].pAll_KeyTimes[j];
+
+			if (keyFrameIndex >= gMageSkeleton->pJoints[i].pKeyframes.size())
+				keyFrameIndex = gMageSkeleton->pJoints[i].pKeyframes.size() - 1;
+
+			gAnimated_Mesh_CB.animationData[arrayIndex] = gMageSkeleton->pJoints[i].pKeyframes[keyFrameIndex].pTranslation.pPosition;
+			
+			arrayIndex++;
+		}
+	}
 
 	// Loop through the control points and add there indices
 #pragma endregion
