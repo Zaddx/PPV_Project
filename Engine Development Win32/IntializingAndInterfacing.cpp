@@ -258,7 +258,7 @@ bool Init_and_Inter::InitScene(User_Input &_input)
 	//Set the Projection matrix
 	camProjection = XMMatrixPerspectiveFovLH(0.4f*3.14f, (float)Width / Height, 1.0f, 1000.0f);
 
-#pragma endregion
+#pragma endregion 
 
 #pragma region FBX Stuff
 
