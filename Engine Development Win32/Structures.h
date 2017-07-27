@@ -64,7 +64,6 @@ struct cbPerObject
 
 struct cbAnimatedMesh
 {
-	DirectX::XMFLOAT4 joints[27];
-	int				  indices[4];
-	float			  weights[4];
+	DirectX::XMFLOAT4 weights;
+	DirectX::XMFLOAT4 indices;
 };

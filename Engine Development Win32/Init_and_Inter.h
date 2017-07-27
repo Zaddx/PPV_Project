@@ -191,7 +191,7 @@ private:
 	Model gMageModel;
 	Model gTeddyModel;
 
-	// Mage constant buffer
+	// CB For Animated mesh (mage)
 	cbAnimatedMesh gAnimated_Mesh_CB;
 
 	// Function For Scrubbing
