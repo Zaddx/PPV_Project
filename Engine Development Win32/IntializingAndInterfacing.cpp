@@ -830,27 +830,27 @@ Keyframe_Vertex VertexInterpolation(Keyframe_Vertex pA, Keyframe_Vertex pB, floa
 
 	// Fill out the new position of the vertex
 	lTemp.pPosition.x = pA.pPosition.x + pRatio * (pB.pPosition.x - pA.pPosition.x);
-	lTemp.pPosition.y = pA.pPosition.x + pRatio * (pB.pPosition.y - pA.pPosition.y);
-	lTemp.pPosition.z = pA.pPosition.x + pRatio * (pB.pPosition.z - pA.pPosition.z);
-	lTemp.pPosition.w = pA.pPosition.x + pRatio * (pB.pPosition.w - pA.pPosition.w);
+	lTemp.pPosition.y = pA.pPosition.y + pRatio * (pB.pPosition.y - pA.pPosition.y);
+	lTemp.pPosition.z = pA.pPosition.z + pRatio * (pB.pPosition.z - pA.pPosition.z);
+	lTemp.pPosition.w = pA.pPosition.w + pRatio * (pB.pPosition.w - pA.pPosition.w);
 
 	// Fill out the new xaxis of the vertex
 	lTemp.pXAxis.x = pA.pXAxis.x + pRatio * (pB.pXAxis.x - pA.pXAxis.x);
-	lTemp.pXAxis.y = pA.pXAxis.x + pRatio * (pB.pXAxis.y - pA.pXAxis.y);
-	lTemp.pXAxis.z = pA.pXAxis.x + pRatio * (pB.pXAxis.z - pA.pXAxis.z);
-	lTemp.pXAxis.w = pA.pXAxis.x + pRatio * (pB.pXAxis.w - pA.pXAxis.w);
+	lTemp.pXAxis.y = pA.pXAxis.y + pRatio * (pB.pXAxis.y - pA.pXAxis.y);
+	lTemp.pXAxis.z = pA.pXAxis.z + pRatio * (pB.pXAxis.z - pA.pXAxis.z);
+	lTemp.pXAxis.w = pA.pXAxis.w + pRatio * (pB.pXAxis.w - pA.pXAxis.w);
 
 	// Fill out the new xayis of the vertex
 	lTemp.pYAxis.x = pA.pYAxis.x + pRatio * (pB.pYAxis.x - pA.pYAxis.x);
-	lTemp.pYAxis.y = pA.pYAxis.x + pRatio * (pB.pYAxis.y - pA.pYAxis.y);
-	lTemp.pYAxis.z = pA.pYAxis.x + pRatio * (pB.pYAxis.z - pA.pYAxis.z);
-	lTemp.pYAxis.w = pA.pYAxis.x + pRatio * (pB.pYAxis.w - pA.pYAxis.w);
+	lTemp.pYAxis.y = pA.pYAxis.y + pRatio * (pB.pYAxis.y - pA.pYAxis.y);
+	lTemp.pYAxis.z = pA.pYAxis.z + pRatio * (pB.pYAxis.z - pA.pYAxis.z);
+	lTemp.pYAxis.w = pA.pYAxis.w + pRatio * (pB.pYAxis.w - pA.pYAxis.w);
 
 	// Fill out the new xazis of the vertex
 	lTemp.pZAxis.x = pA.pZAxis.x + pRatio * (pB.pZAxis.x - pA.pZAxis.x);
-	lTemp.pZAxis.y = pA.pZAxis.x + pRatio * (pB.pZAxis.y - pA.pZAxis.y);
-	lTemp.pZAxis.z = pA.pZAxis.x + pRatio * (pB.pZAxis.z - pA.pZAxis.z);
-	lTemp.pZAxis.w = pA.pZAxis.x + pRatio * (pB.pZAxis.w - pA.pZAxis.w);
+	lTemp.pZAxis.y = pA.pZAxis.y + pRatio * (pB.pZAxis.y - pA.pZAxis.y);
+	lTemp.pZAxis.z = pA.pZAxis.z + pRatio * (pB.pZAxis.z - pA.pZAxis.z);
+	lTemp.pZAxis.w = pA.pZAxis.w + pRatio * (pB.pZAxis.w - pA.pZAxis.w);
 
 	// Fill out the new matrix of the vertex
 	DirectX::XMVECTOR lXAxis = DirectX::XMVectorSet(lTemp.pXAxis.x, lTemp.pXAxis.y, lTemp.pXAxis.z, lTemp.pXAxis.w);
@@ -893,9 +893,10 @@ void Init_and_Inter::TweeningAnimation(Timer pTimer)
 	int lBelow_KeyTime = 0;
 	int lAbove_KeyTime = 0;
 
-	// Before we loop the joints clear the debug renders
-	mage_bone_debugRenderer.clear_counter();
-	mage_joint_debugRenderer.clear_counter();
+	// Keyframes to hold the data 
+	Keyframe_Info lBelow_Keyframe;
+	Keyframe_Info lAbove_Keyframe;
+	Keyframe_Info lLerped_Keyframe;
 
 	// Loop through each joint
 	for (unsigned int i = 0; i < gMageSkeleton->pJoints.size(); i++)
@@ -903,14 +904,6 @@ void Init_and_Inter::TweeningAnimation(Timer pTimer)
 		// Loop through the the joints keyframes
 		for (unsigned int j = 0; j < gMageSkeleton->pJoints[i].pAll_KeyTimes.size(); j++)
 		{
-			// Check to see if j is equal to the last index
-			// If so lerp it between the last and first index
-			/*if (j + 1 == gMageSkeleton->pJoints[i].pAll_KeyTimes.size())
-			{
-				lBelow_KeyTime = gMageSkeleton->pJoints[i].pAll_KeyTimes[j] - 1;
-				lAbove_KeyTime = gMageSkeleton->pJoints[i].pAll_KeyTimes[0];
-				break;
-			}*/
 			// Check to see if the time is less then j and j + 1
 			if (gMageSkeleton->pJoints[i].pAll_KeyTimes[j] < lT && lT < gMageSkeleton->pJoints[i].pAll_KeyTimes[j + 1])
 			{
@@ -927,17 +920,12 @@ void Init_and_Inter::TweeningAnimation(Timer pTimer)
 		input.gBelowKeyframe = lBelow_KeyTime;
 		input.gAboveKeyframes = lAbove_KeyTime;
 
-		Keyframe_Info lBelow_Keyframe = gMageSkeleton->pJoints[i].pKeyframes[lBelow_KeyTime];
-		Keyframe_Info lAbove_Keyframe = gMageSkeleton->pJoints[i].pKeyframes[lAbove_KeyTime];
-		Keyframe_Info lLerped_Keyframe;
+		lBelow_Keyframe = gMageSkeleton->pJoints[i].pKeyframes[lBelow_KeyTime];
+		lAbove_Keyframe = gMageSkeleton->pJoints[i].pKeyframes[lAbove_KeyTime];
 
 		lLerped_Keyframe.pTranslation = VertexInterpolation(lBelow_Keyframe.pTranslation, lAbove_Keyframe.pTranslation, lD);
 		lLerped_Keyframe.pRotation = VertexInterpolation(lBelow_Keyframe.pRotation, lAbove_Keyframe.pRotation, lD);
 		lLerped_Keyframe.pScale = VertexInterpolation(lBelow_Keyframe.pScale, lAbove_Keyframe.pScale, lD);
-
-		XMFLOAT3 lLerp_Translation = XMFLOAT3(lLerped_Keyframe.pTranslation.pPosition.x, lLerped_Keyframe.pTranslation.pPosition.y, lLerped_Keyframe.pTranslation.pPosition.z);
-		XMFLOAT3 lAbove_Translation = XMFLOAT3(lAbove_Keyframe.pTranslation.pPosition.x, lAbove_Keyframe.pTranslation.pPosition.y, lAbove_Keyframe.pTranslation.pPosition.z);
-		mage_bone_debugRenderer.add_debug_line(lLerp_Translation, lAbove_Translation, XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
 
 		// Get the X, Y, Z of lerped translation
 		float lXVal = lLerped_Keyframe.pTranslation.pPosition.x;
@@ -946,9 +934,9 @@ void Init_and_Inter::TweeningAnimation(Timer pTimer)
 
 		// Get the Position, X,Y,Z Axis
 		XMFLOAT3 lPosition = XMFLOAT3(lXVal, lYVal, lZVal);
-		XMFLOAT3 lXAxis = XMFLOAT3(gMageSkeleton->pJoints[i].pXAxis.x, gMageSkeleton->pJoints[i].pXAxis.y, gMageSkeleton->pJoints[i].pXAxis.z);
-		XMFLOAT3 lYAxis = XMFLOAT3(gMageSkeleton->pJoints[i].pYAxis.x, gMageSkeleton->pJoints[i].pYAxis.y, gMageSkeleton->pJoints[i].pYAxis.z);
-		XMFLOAT3 lZAxis = XMFLOAT3(gMageSkeleton->pJoints[i].pZAxis.x, gMageSkeleton->pJoints[i].pZAxis.y, gMageSkeleton->pJoints[i].pZAxis.z);
+		XMFLOAT3 lXAxis = XMFLOAT3(lLerped_Keyframe.pTranslation.pXAxis.x, lLerped_Keyframe.pTranslation.pXAxis.y, lLerped_Keyframe.pTranslation.pXAxis.z);
+		XMFLOAT3 lYAxis = XMFLOAT3(lLerped_Keyframe.pTranslation.pYAxis.x, lLerped_Keyframe.pTranslation.pYAxis.y, lLerped_Keyframe.pTranslation.pYAxis.z);
+		XMFLOAT3 lZAxis = XMFLOAT3(lLerped_Keyframe.pTranslation.pZAxis.x, lLerped_Keyframe.pTranslation.pZAxis.y, lLerped_Keyframe.pTranslation.pZAxis.z);
 
 		// Add lines to the debug renderer
 		// Draw X axis in red
@@ -960,15 +948,27 @@ void Init_and_Inter::TweeningAnimation(Timer pTimer)
 		// Draw Z axis in blue
 		XMFLOAT3 lPosToZAxis = XMFLOAT3(lPosition.x + lZAxis.x, lPosition.y + lZAxis.y, lPosition.z + lZAxis.z);
 		mage_joint_debugRenderer.add_debug_line(lPosition, lPosToZAxis, XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f));
-	}
 
+		// Bone Adding
+		// Get the X, Y, Z values at the given keyframe
+		float lChild_XVal = lLerped_Keyframe.pTranslation.pPosition.x;
+		float lChild_YVal = lLerped_Keyframe.pTranslation.pPosition.y;
+		float lChild_ZVal = lLerped_Keyframe.pTranslation.pPosition.z;
+		float lParent_XVal = lAbove_Keyframe.pTranslation.pPosition.x;
+		float lParent_YVal = lAbove_Keyframe.pTranslation.pPosition.y;
+		float lParent_ZVal = lAbove_Keyframe.pTranslation.pPosition.z;
+
+		// Get the line between parent to child
+		XMFLOAT3 lChildPosition = XMFLOAT3(lChild_XVal, lChild_YVal, lChild_ZVal);
+		XMFLOAT3 lParentPosition = XMFLOAT3(lParent_XVal, lParent_YVal, lParent_ZVal);
+
+		// Add the line to the bone_debugRenderer
+		mage_bone_debugRenderer.add_debug_line(lChildPosition, lParentPosition, XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+	}
 
 	mage_bone_debugRenderer.push_to_gpu(d3d11DevCon);
 	mage_joint_debugRenderer.push_to_gpu(d3d11DevCon);
 
-	// Update the keyframe 
-	//UpdateKeyframe(lBelow_KeyTime);
-	//UpdateKeyframe(lAbove_KeyTime);
 }
 
 void Debug_Renderer::add_debug_line(XMFLOAT3 a, XMFLOAT3 b, XMFLOAT4 color)
