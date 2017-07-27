@@ -488,6 +488,9 @@ void Init_and_Inter::UpdateScene(double time, User_Input &_input, Timer pTimer)
 	// Update the input
 	input = _input;
 
+	// Update the user_input
+	input.gAvaiable_Keytimes = gMageSkeleton->pAvailableKeytimes;
+
 	//Keep the cubes rotating
 	rot += 1.0f * time;
 	if (rot > 6.26f)
@@ -729,28 +732,30 @@ void Init_and_Inter::UpdateCamera()
 
 void Init_and_Inter::UpdateKeyframe(int pKeyframeIndex)
 {
+	int lKeyFrameIndex = pKeyframeIndex;
+
 	// Add the lines into the joint_debugRenderer
 	for (unsigned int i = 0; i < gMageSkeleton->pJoints.size(); i++)
 	{
 		// Check to see if the index is even inside of the range
-		if (gMageSkeleton->pJoints[i].pKeyframes.size() - 1 <= pKeyframeIndex)
+		if (gMageSkeleton->pJoints[i].pKeyframes.size() - 1 <= lKeyFrameIndex)
 		{
 			input.gKeyframeOutOfRange = true;
-			pKeyframeIndex = gMageSkeleton->pJoints[i].pKeyframes.size() - 1;
+			lKeyFrameIndex = gMageSkeleton->pJoints[i].pKeyframes.size() - 1;
 		}
 		else
 			input.gKeyframeOutOfRange = false;
 
 		// Get the X, Y, Z translation values at the given keyframe
-		float lXVal = gMageSkeleton->pJoints[i].pKeyframes[pKeyframeIndex].pTranslation.pPosition.x;
-		float lYVal = gMageSkeleton->pJoints[i].pKeyframes[pKeyframeIndex].pTranslation.pPosition.y;
-		float lZVal = gMageSkeleton->pJoints[i].pKeyframes[pKeyframeIndex].pTranslation.pPosition.z;
+		float lXVal = gMageSkeleton->pJoints[i].pKeyframes[lKeyFrameIndex].pTranslation.pPosition.x;
+		float lYVal = gMageSkeleton->pJoints[i].pKeyframes[lKeyFrameIndex].pTranslation.pPosition.y;
+		float lZVal = gMageSkeleton->pJoints[i].pKeyframes[lKeyFrameIndex].pTranslation.pPosition.z;
 
 		// Get the Position, X,Y,Z Axis
 		XMFLOAT3 lPosition = XMFLOAT3(lXVal, lYVal, lZVal);
-		XMFLOAT4 lXAxis = gMageSkeleton->pJoints[i].pKeyframes[pKeyframeIndex].pTranslation.pXAxis;
-		XMFLOAT4 lYAxis = gMageSkeleton->pJoints[i].pKeyframes[pKeyframeIndex].pTranslation.pYAxis;
-		XMFLOAT4 lZAxis = gMageSkeleton->pJoints[i].pKeyframes[pKeyframeIndex].pTranslation.pZAxis;
+		XMFLOAT4 lXAxis = gMageSkeleton->pJoints[i].pKeyframes[lKeyFrameIndex].pTranslation.pXAxis;
+		XMFLOAT4 lYAxis = gMageSkeleton->pJoints[i].pKeyframes[lKeyFrameIndex].pTranslation.pYAxis;
+		XMFLOAT4 lZAxis = gMageSkeleton->pJoints[i].pKeyframes[lKeyFrameIndex].pTranslation.pZAxis;
 
 		// Add lines to the debug renderer
 		// Draw X axis in red
@@ -777,28 +782,28 @@ void Init_and_Inter::UpdateKeyframe(int pKeyframeIndex)
 		if (lParentIndex == -1)
 			continue;
 
-		if (gMageSkeleton->pJoints[i].pKeyframes.size() - 1 < pKeyframeIndex)
+		if (gMageSkeleton->pJoints[i].pKeyframes.size() - 1 < lKeyFrameIndex)
 		{
 			input.gKeyframeOutOfRange = true;
-			pKeyframeIndex = gMageSkeleton->pJoints[i].pKeyframes.size() - 1;
+			lKeyFrameIndex = gMageSkeleton->pJoints[i].pKeyframes.size() - 1;
 		}
-		else if (gMageSkeleton->pJoints[lParentIndex].pKeyframes.size() - 1 < pKeyframeIndex)
+		else if (gMageSkeleton->pJoints[lParentIndex].pKeyframes.size() - 1 < lKeyFrameIndex)
 		{
 			input.gKeyframeOutOfRange = true;
-			pKeyframeIndex = gMageSkeleton->pJoints[lParentIndex].pKeyframes.size() - 1;
+			lKeyFrameIndex = gMageSkeleton->pJoints[lParentIndex].pKeyframes.size() - 1;
 		}
-		else if (gMageSkeleton->pJoints[i].pKeyframes.size() - 1 > pKeyframeIndex)
+		else if (gMageSkeleton->pJoints[i].pKeyframes.size() - 1 > lKeyFrameIndex)
 		{
 			input.gKeyframeOutOfRange = false;
 		}
 		{
 			// Get the X, Y, Z values at the given keyframe
-			float lChild_XVal = gMageSkeleton->pJoints[i].pKeyframes[pKeyframeIndex].pTranslation.pPosition.x;
-			float lChild_YVal = gMageSkeleton->pJoints[i].pKeyframes[pKeyframeIndex].pTranslation.pPosition.y;
-			float lChild_ZVal = gMageSkeleton->pJoints[i].pKeyframes[pKeyframeIndex].pTranslation.pPosition.z;
-			float lParent_XVal = gMageSkeleton->pJoints[lParentIndex].pKeyframes[pKeyframeIndex].pTranslation.pPosition.x;
-			float lParent_YVal = gMageSkeleton->pJoints[lParentIndex].pKeyframes[pKeyframeIndex].pTranslation.pPosition.y;
-			float lParent_ZVal = gMageSkeleton->pJoints[lParentIndex].pKeyframes[pKeyframeIndex].pTranslation.pPosition.z;
+			float lChild_XVal = gMageSkeleton->pJoints[i].pKeyframes[lKeyFrameIndex].pTranslation.pPosition.x;
+			float lChild_YVal = gMageSkeleton->pJoints[i].pKeyframes[lKeyFrameIndex].pTranslation.pPosition.y;
+			float lChild_ZVal = gMageSkeleton->pJoints[i].pKeyframes[lKeyFrameIndex].pTranslation.pPosition.z;
+			float lParent_XVal = gMageSkeleton->pJoints[lParentIndex].pKeyframes[lKeyFrameIndex].pTranslation.pPosition.x;
+			float lParent_YVal = gMageSkeleton->pJoints[lParentIndex].pKeyframes[lKeyFrameIndex].pTranslation.pPosition.y;
+			float lParent_ZVal = gMageSkeleton->pJoints[lParentIndex].pKeyframes[lKeyFrameIndex].pTranslation.pPosition.z;
 
 			// Get the line between parent to child
 			XMFLOAT3 lChildPosition = XMFLOAT3(lChild_XVal, lChild_YVal, lChild_ZVal);
@@ -956,7 +961,7 @@ void Init_and_Inter::TweeningAnimation(Timer pTimer)
 		XMFLOAT3 lPosToZAxis = XMFLOAT3(lPosition.x + lZAxis.x, lPosition.y + lZAxis.y, lPosition.z + lZAxis.z);
 		mage_joint_debugRenderer.add_debug_line(lPosition, lPosToZAxis, XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f));
 	}
-	
+
 
 	mage_bone_debugRenderer.push_to_gpu(d3d11DevCon);
 	mage_joint_debugRenderer.push_to_gpu(d3d11DevCon);
@@ -1099,18 +1104,10 @@ void User_Input::DetectInput(double time, Init_and_Inter& _initializer, HWND hWn
 
 	// Add message boxes for each keypress for debug purposes
 	if ((1 << 15) & lLeftArrowKeyState && gKeyframeIndex != 0 && canUpdateIndex)
-	{
-		gKeyframeIndex--;
-
-		std::cout << "KeyFrameIndex: " << gKeyframeIndex << " \n";
-	}
+		gKeyTime_Index--;
 
 	if ((1 << 15) & lRightArrowKeyState && canUpdateIndex && !gKeyframeOutOfRange)
-	{
-		gKeyframeIndex++;
-
-		std::cout << "KeyFrameIndex: " << gKeyframeIndex << " \n";
-	}
+		gKeyTime_Index++;
 
 	if ((1 << 15) & lRightArrowKeyState || (1 << 15) & lLeftArrowKeyState)
 		canUpdateIndex = false;
@@ -1126,7 +1123,6 @@ void User_Input::DetectInput(double time, Init_and_Inter& _initializer, HWND hWn
 		std::cout << "Animation Playing: " << gAnimationPlaying << " \n";
 		std::cout << "Animation Scrubbing: " << gAnimationScrubbing << " \n";
 		std::cout << "Animation Tweening: " << gAnimationTweening << " \n";
-
 	}
 
 	if ((1 << 15) & lF2KeyState && !gAnimationTweening)
@@ -1153,13 +1149,23 @@ void User_Input::DetectInput(double time, Init_and_Inter& _initializer, HWND hWn
 
 	if (gAnimationPlaying || gAnimationTweening)
 	{
-		gKeyframeIndex++;
+		gKeyTime_Index++;
 
 		// Restart the animation
 		if (gKeyframeOutOfRange)
-			gKeyframeIndex = 0;
+			gKeyTime_Index = 0;
 
 		// std::cout << "KeyFrameIndex: " << gKeyframeIndex << " \n";
+	}
+
+	if (gAvaiable_Keytimes.size() != 0)
+	{
+		if (gKeyTime_Index < 0)
+			gKeyTime_Index = 0;
+		if (gKeyTime_Index >= gAvaiable_Keytimes.size())
+			gKeyTime_Index = gAvaiable_Keytimes.size() - 1;
+
+		gKeyframeIndex = gAvaiable_Keytimes[gKeyTime_Index];
 	}
 
 	if ((1 << 15) & lEnterKeyState && gAnimationPlaying)
@@ -1170,6 +1176,10 @@ void User_Input::DetectInput(double time, Init_and_Inter& _initializer, HWND hWn
 		std::cout << "Below Keyframe Index: " << gBelowKeyframe << " \n";
 		std::cout << "Above Keyframe Index: " << gAboveKeyframes << " \n";
 	}
+
+	if ((1 << 15) & lEnterKeyState && !gAnimationPlaying && !gAnimationTweening)
+		std::cout << "Current Keyframe Index: " << gKeyframeIndex << " \n";
+
 
 	//mouseLastState = mouseCurrState;
 	gLastFrameCursorPos = lCurrentFrameCursorPos;

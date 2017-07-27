@@ -1002,6 +1002,9 @@ namespace FBXLibrary
 		// Get rid of all duplicate vertices
 		ConstructUniqueVertices();
 
+		// Put in the keytimes
+		ConstructKeyTimes();
+
 		return &gSkeleton;
 	}
 
@@ -3117,19 +3120,8 @@ namespace FBXLibrary
 
 		if (lKeytime_Exist)
 		{
-			// Loop through for each X
 			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Vertex[i].pKeytime == pKeyTime && pKeyframe_Vertex[i].pValueIndex == X)
-					lTemp_Vertex = pKeyframe_Vertex[i];
-
-			// Loop through for each Y
-			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Vertex[i].pKeytime == pKeyTime && pKeyframe_Vertex[i].pValueIndex == Y)
-					lTemp_Vertex = pKeyframe_Vertex[i];
-
-			// Loop through for each Z
-			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Vertex[i].pKeytime == pKeyTime && pKeyframe_Vertex[i].pValueIndex == Z)
+				if (pKeyframe_Vertex[i].pKeytime == pKeyTime)
 					lTemp_Vertex = pKeyframe_Vertex[i];
 		}
 		else
@@ -3139,36 +3131,12 @@ namespace FBXLibrary
 			Keyframe_Vertex lPrev_Vertex;
 			Keyframe_Vertex lLerp_Vertex;
 
-			// Fill out the prev vertex
-			// Loop through for each X
 			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Vertex[i].pKeytime == lPrev_Keytime && pKeyframe_Vertex[i].pValueIndex == X)
+				if (pKeyframe_Vertex[i].pKeytime == lPrev_Keytime)
 					lPrev_Vertex = pKeyframe_Vertex[i];
 
-			// Loop through for each Y
 			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Vertex[i].pKeytime == lPrev_Keytime && pKeyframe_Vertex[i].pValueIndex == Y)
-					lPrev_Vertex = pKeyframe_Vertex[i];
-
-			// Loop through for each Z
-			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Vertex[i].pKeytime == lPrev_Keytime && pKeyframe_Vertex[i].pValueIndex == Z)
-					lPrev_Vertex = pKeyframe_Vertex[i];
-
-			// Fill out the next vertex
-			// Loop through for each X
-			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Vertex[i].pKeytime == lNext_Keytime && pKeyframe_Vertex[i].pValueIndex == X)
-					lNext_Vertex = pKeyframe_Vertex[i];
-
-			// Loop through for each Y
-			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Vertex[i].pKeytime == lNext_Keytime && pKeyframe_Vertex[i].pValueIndex == Y)
-					lNext_Vertex = pKeyframe_Vertex[i];
-
-			// Loop through for each Z
-			for (unsigned int i = 0; i < lSize; i++)
-				if (pKeyframe_Vertex[i].pKeytime == lNext_Keytime && pKeyframe_Vertex[i].pValueIndex == Z)
+				if (pKeyframe_Vertex[i].pKeytime == lNext_Keytime)
 					lNext_Vertex = pKeyframe_Vertex[i];
 
 			// Interpolate between the prev -> next
@@ -3350,5 +3318,16 @@ namespace FBXLibrary
 		std::vector<Mesh_Vertex> pVertices_Copy;
 
 
+	}
+
+	void FBX_Functions::ConstructKeyTimes()
+	{
+		std::set<int> lKeyTimes;
+
+		for (unsigned int i = 0; i < gSkeleton.pJoints.size(); i++)
+			for (unsigned int j = 0; j < gSkeleton.pJoints[i].pAll_KeyTimes.size(); j++)
+				lKeyTimes.insert(gSkeleton.pJoints[i].pAll_KeyTimes[j]);
+
+		gSkeleton.pAvailableKeytimes.assign(lKeyTimes.begin(), lKeyTimes.end());
 	}
 }

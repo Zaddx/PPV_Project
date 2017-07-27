@@ -112,6 +112,7 @@ struct Skeleton
 	std::string pAnimationName;
 	double pAnimationLength;
 	std::vector<CtrlPoint*> pControlPoints;
+	std::vector<int> pAvailableKeytimes;
 
 	Mesh pMesh;
 };

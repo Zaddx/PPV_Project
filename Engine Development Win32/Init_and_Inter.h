@@ -69,7 +69,6 @@ public:
 	float camPitch = 0.0f;
 
 	// Variables for animation keypresses
-	int gKeyframeIndex = 0;
 	bool gAnimationScrubbing = true;
 	bool gAnimationPlaying = false;
 	bool gAnimationTweening = false;
@@ -84,6 +83,13 @@ public:
 
 	float m_viewSmoothing = 0.5f;
 	float m_viewSensitivity = 0.65f;
+
+	// Variables for indexing
+	std::vector<int> gAvaiable_Keytimes;
+	unsigned int gKeyTime_Index = 0;
+	int gKeyframeIndex = 0;
+
+	bool looping = false;
 
 	void DetectInput(double time, Init_and_Inter& _initializer, HWND hWnd);
 };

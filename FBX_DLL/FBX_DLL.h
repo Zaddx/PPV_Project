@@ -83,6 +83,7 @@ namespace FBXLibrary
 		// Persoanl Function to construct vertices
 		void ConstructKeyFrames();
 		void ConstructUniqueVertices();
+		void ConstructKeyTimes();
 		int LargestKeyTime(std::vector<Keyframe_Vertex> pKeyframe_Vertices);
 		int CompareKeyTime(Keyframe_Vertex pA, Keyframe_Vertex pB);
 		Keyframe_Vertex GetDataAtKeyTime(std::vector<Keyframe_Vertex> pKeyframe_Infos, std::vector<int> pKeytimes, int pKeyTime);
