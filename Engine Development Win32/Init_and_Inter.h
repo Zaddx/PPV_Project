@@ -75,6 +75,10 @@ public:
 	bool gAnimationTweening = false;
 	bool gKeyframeOutOfRange = false;
 
+	// Stuff for tweening
+	int gBelowKeyframe = 0;
+	int gAboveKeyframes = 0;
+
 	// Variables for camera movement (none direct input way)
 	POINT gLastFrameCursorPos;
 

@@ -2803,11 +2803,15 @@ namespace FBXLibrary
 				lKeyframe_Vertex_Info.pValueType = pVertex_Part;
 				lKeyframe_Vertex_Info.pValueIndex = pVertex_Part_Data;
 
+				// Create fbxtime
+				FbxTime time;
+				time.SetFrame(lKeyframe_Vertex_Info.pKeytime);
+
 				// Fill out the Matrix, Position, X/Y/Z Axis
-				FbxVector4 lXaxis = pNode->EvaluateGlobalTransform().GetRow(0);
-				FbxVector4 lYaxis = pNode->EvaluateGlobalTransform().GetRow(1);
-				FbxVector4 lZaxis = pNode->EvaluateGlobalTransform().GetRow(2);
-				FbxVector4 lPosition = pNode->EvaluateGlobalTransform().GetRow(3);
+				FbxVector4 lXaxis = pNode->EvaluateGlobalTransform(time).GetColumn(0);
+				FbxVector4 lYaxis = pNode->EvaluateGlobalTransform(time).GetColumn(1);
+				FbxVector4 lZaxis = pNode->EvaluateGlobalTransform(time).GetColumn(2);
+				FbxVector4 lPosition = pNode->EvaluateGlobalTransform(time).GetRow(3);
 
 				lKeyframe_Vertex_Info.pXAxis = DirectX::XMFLOAT4(lXaxis[0], lXaxis[1], lXaxis[2], lXaxis[3]);
 				lKeyframe_Vertex_Info.pYAxis = DirectX::XMFLOAT4(lYaxis[0], lYaxis[1], lYaxis[2], lYaxis[3]);
@@ -2815,9 +2819,9 @@ namespace FBXLibrary
 				lKeyframe_Vertex_Info.pPosition = DirectX::XMFLOAT4(lPosition[0], lPosition[1], lPosition[2], lPosition[3]);
 
 				lKeyframe_Vertex_Info.pMatrix = DirectX::XMMATRIX(lXaxis[0], lXaxis[1], lXaxis[2], lXaxis[3],
-																  lYaxis[0], lYaxis[1], lYaxis[2], lYaxis[3],
-																  lZaxis[0], lZaxis[1], lZaxis[2], lZaxis[3],
-																  lPosition[0], lPosition[1], lPosition[2], lPosition[3]);
+					lYaxis[0], lYaxis[1], lYaxis[2], lYaxis[3],
+					lZaxis[0], lZaxis[1], lZaxis[2], lZaxis[3],
+					lPosition[0], lPosition[1], lPosition[2], lPosition[3]);
 
 				// Push back the keyframe info
 				gSkeleton.pJoints[pJointIndex].pVertex_Info_Vector.pVertices.push_back(lKeyframe_Vertex_Info);
@@ -3342,8 +3346,9 @@ namespace FBXLibrary
 
 	void FBX_Functions::ConstructUniqueVertices()
 	{
-		std::set<Mesh_Vertex> lUnique_Vertices;
+		std::vector<Mesh_Vertex> pUnique_Vertices;
+		std::vector<Mesh_Vertex> pVertices_Copy;
 
-		// Check to see if !(a < b) && !(b < a)
+
 	}
 }

@@ -618,7 +618,7 @@ void Init_and_Inter::DrawScene()
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 
 	// Draw the mage_joint_DebugRenderer Lines
-	mage_joint_debugRenderer.RenderLines();
+	//mage_joint_debugRenderer.RenderLines();
 
 	// Draw the mage_bone_debugRenderer Lines
 	mage_bone_debugRenderer.RenderLines();
@@ -670,7 +670,7 @@ void Init_and_Inter::DrawScene()
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 
 	//Draw the mage model mesh
-	d3d11DevCon->Draw(gMageSkeleton->pMesh.pVertices.size(), 0);
+	//d3d11DevCon->Draw(gMageSkeleton->pMesh.pVertices.size(), 0);
 
 #pragma endregion
 
@@ -878,7 +878,8 @@ void Init_and_Inter::TweeningAnimation(Timer pTimer)
 	lTimer.frameTime = lTimer.GetFrameTime();
 
 	// Start by getting d (ratio)
-	float lD = pTimer.GetTime();
+	//float lD = pTimer.GetTime();
+	float lD = pTimer.frameTime;
 
 	// Get the time (t)
 	float lT = lTimer.GetTime();
@@ -899,18 +900,27 @@ void Init_and_Inter::TweeningAnimation(Timer pTimer)
 		{
 			// Check to see if j is equal to the last index
 			// If so lerp it between the last and first index
-			if (j + 1 == gMageSkeleton->pJoints[i].pAll_KeyTimes.size())
+			/*if (j + 1 == gMageSkeleton->pJoints[i].pAll_KeyTimes.size())
 			{
 				lBelow_KeyTime = gMageSkeleton->pJoints[i].pAll_KeyTimes[j] - 1;
 				lAbove_KeyTime = gMageSkeleton->pJoints[i].pAll_KeyTimes[0];
-			}
+				break;
+			}*/
 			// Check to see if the time is less then j and j + 1
-			else if (gMageSkeleton->pJoints[i].pAll_KeyTimes[j] > lT && lT < gMageSkeleton->pJoints[i].pAll_KeyTimes[j + 1])
+			if (gMageSkeleton->pJoints[i].pAll_KeyTimes[j] < lT && lT < gMageSkeleton->pJoints[i].pAll_KeyTimes[j + 1])
 			{
-				lBelow_KeyTime = gMageSkeleton->pJoints[i].pAll_KeyTimes[j] - 1;
-				lAbove_KeyTime = gMageSkeleton->pJoints[i].pAll_KeyTimes[j + 1] - 1;
+				lBelow_KeyTime = gMageSkeleton->pJoints[i].pAll_KeyTimes[j];
+				lAbove_KeyTime = gMageSkeleton->pJoints[i].pAll_KeyTimes[j + 1];
+
+				if (lAbove_KeyTime >= gMageSkeleton->pJoints[i].pAll_KeyTimes[gMageSkeleton->pJoints[i].pAll_KeyTimes.size() - 1])
+					lAbove_KeyTime = 0;
+				break;
 			}
 		}
+
+		// Pass above/below keyframe times into input for displaying
+		input.gBelowKeyframe = lBelow_KeyTime;
+		input.gAboveKeyframes = lAbove_KeyTime;
 
 		Keyframe_Info lBelow_Keyframe = gMageSkeleton->pJoints[i].pKeyframes[lBelow_KeyTime];
 		Keyframe_Info lAbove_Keyframe = gMageSkeleton->pJoints[i].pKeyframes[lAbove_KeyTime];
@@ -946,6 +956,7 @@ void Init_and_Inter::TweeningAnimation(Timer pTimer)
 		XMFLOAT3 lPosToZAxis = XMFLOAT3(lPosition.x + lZAxis.x, lPosition.y + lZAxis.y, lPosition.z + lZAxis.z);
 		mage_joint_debugRenderer.add_debug_line(lPosition, lPosToZAxis, XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f));
 	}
+	
 
 	mage_bone_debugRenderer.push_to_gpu(d3d11DevCon);
 	mage_joint_debugRenderer.push_to_gpu(d3d11DevCon);
@@ -1140,7 +1151,7 @@ void User_Input::DetectInput(double time, Init_and_Inter& _initializer, HWND hWn
 		std::cout << "Animation Tweening: " << gAnimationTweening << " \n";
 	}
 
-	if (gAnimationPlaying)
+	if (gAnimationPlaying || gAnimationTweening)
 	{
 		gKeyframeIndex++;
 
@@ -1151,9 +1162,13 @@ void User_Input::DetectInput(double time, Init_and_Inter& _initializer, HWND hWn
 		// std::cout << "KeyFrameIndex: " << gKeyframeIndex << " \n";
 	}
 
-	if ((1 << 15) & lEnterKeyState)
-	{
+	if ((1 << 15) & lEnterKeyState && gAnimationPlaying)
 		std::cout << "Current Keyframe Index: " << gKeyframeIndex << " \n";
+
+	if ((1 << 15) & lEnterKeyState && gAnimationTweening)
+	{
+		std::cout << "Below Keyframe Index: " << gBelowKeyframe << " \n";
+		std::cout << "Above Keyframe Index: " << gAboveKeyframes << " \n";
 	}
 
 	//mouseLastState = mouseCurrState;
