@@ -621,7 +621,7 @@ void Init_and_Inter::DrawScene()
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 
 	// Draw the mage_joint_DebugRenderer Lines
-	//mage_joint_debugRenderer.RenderLines();
+	mage_joint_debugRenderer.RenderLines();
 
 	// Draw the mage_bone_debugRenderer Lines
 	mage_bone_debugRenderer.RenderLines();
@@ -673,7 +673,7 @@ void Init_and_Inter::DrawScene()
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 
 	//Draw the mage model mesh
-	//d3d11DevCon->Draw(gMageSkeleton->pMesh.pVertices.size(), 0);
+	d3d11DevCon->Draw(gMageSkeleton->pMesh.pVertices.size(), 0);
 
 #pragma endregion
 
@@ -887,8 +887,7 @@ void Init_and_Inter::TweeningAnimation(Timer pTimer)
 	float lD = pTimer.frameTime;
 
 	// Get the time (t)
-	//float lT = lTimer.GetTime();
-	float lT = input.gKeyframeIndex * lD;
+	float lT = lTimer.GetTime();
 
 	// Ints to hold the keyframe values
 	int lBelow_KeyTime = 0;
