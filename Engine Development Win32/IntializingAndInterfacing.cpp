@@ -363,6 +363,9 @@ bool Init_and_Inter::InitScene(User_Input &_input)
 
 	hr = d3d11Device->CreateBuffer(&mage_cbbd, NULL, &cbPerObjectBuffer);
 
+	// Fill out the gAnimated_Mesh_CB
+
+
 #pragma endregion
 
 #pragma region Teddy Model

@@ -3016,27 +3016,27 @@ namespace FBXLibrary
 
 		// Fill out the new position of the vertex
 		lTemp.pPosition.x = pA.pPosition.x + pRatio * (pB.pPosition.x - pA.pPosition.x);
-		lTemp.pPosition.y = pA.pPosition.x + pRatio * (pB.pPosition.y - pA.pPosition.y);
-		lTemp.pPosition.z = pA.pPosition.x + pRatio * (pB.pPosition.z - pA.pPosition.z);
-		lTemp.pPosition.w = pA.pPosition.x + pRatio * (pB.pPosition.w - pA.pPosition.w);
+		lTemp.pPosition.y = pA.pPosition.y + pRatio * (pB.pPosition.y - pA.pPosition.y);
+		lTemp.pPosition.z = pA.pPosition.z + pRatio * (pB.pPosition.z - pA.pPosition.z);
+		lTemp.pPosition.w = pA.pPosition.w + pRatio * (pB.pPosition.w - pA.pPosition.w);
 
 		// Fill out the new xaxis of the vertex
 		lTemp.pXAxis.x = pA.pXAxis.x + pRatio * (pB.pXAxis.x - pA.pXAxis.x);
-		lTemp.pXAxis.y = pA.pXAxis.x + pRatio * (pB.pXAxis.y - pA.pXAxis.y);
-		lTemp.pXAxis.z = pA.pXAxis.x + pRatio * (pB.pXAxis.z - pA.pXAxis.z);
-		lTemp.pXAxis.w = pA.pXAxis.x + pRatio * (pB.pXAxis.w - pA.pXAxis.w);
+		lTemp.pXAxis.y = pA.pXAxis.y + pRatio * (pB.pXAxis.y - pA.pXAxis.y);
+		lTemp.pXAxis.z = pA.pXAxis.z + pRatio * (pB.pXAxis.z - pA.pXAxis.z);
+		lTemp.pXAxis.w = pA.pXAxis.w + pRatio * (pB.pXAxis.w - pA.pXAxis.w);
 
 		// Fill out the new xayis of the vertex
 		lTemp.pYAxis.x = pA.pYAxis.x + pRatio * (pB.pYAxis.x - pA.pYAxis.x);
-		lTemp.pYAxis.y = pA.pYAxis.x + pRatio * (pB.pYAxis.y - pA.pYAxis.y);
-		lTemp.pYAxis.z = pA.pYAxis.x + pRatio * (pB.pYAxis.z - pA.pYAxis.z);
-		lTemp.pYAxis.w = pA.pYAxis.x + pRatio * (pB.pYAxis.w - pA.pYAxis.w);
+		lTemp.pYAxis.y = pA.pYAxis.y + pRatio * (pB.pYAxis.y - pA.pYAxis.y);
+		lTemp.pYAxis.z = pA.pYAxis.z + pRatio * (pB.pYAxis.z - pA.pYAxis.z);
+		lTemp.pYAxis.w = pA.pYAxis.w + pRatio * (pB.pYAxis.w - pA.pYAxis.w);
 
 		// Fill out the new xazis of the vertex
 		lTemp.pZAxis.x = pA.pZAxis.x + pRatio * (pB.pZAxis.x - pA.pZAxis.x);
-		lTemp.pZAxis.y = pA.pZAxis.x + pRatio * (pB.pZAxis.y - pA.pZAxis.y);
-		lTemp.pZAxis.z = pA.pZAxis.x + pRatio * (pB.pZAxis.z - pA.pZAxis.z);
-		lTemp.pZAxis.w = pA.pZAxis.x + pRatio * (pB.pZAxis.w - pA.pZAxis.w);
+		lTemp.pZAxis.y = pA.pZAxis.y + pRatio * (pB.pZAxis.y - pA.pZAxis.y);
+		lTemp.pZAxis.z = pA.pZAxis.z + pRatio * (pB.pZAxis.z - pA.pZAxis.z);
+		lTemp.pZAxis.w = pA.pZAxis.w + pRatio * (pB.pZAxis.w - pA.pZAxis.w);
 
 		// Fill out the new matrix of the vertex
 		DirectX::XMVECTOR lXAxis = DirectX::XMVectorSet(lTemp.pXAxis.x, lTemp.pXAxis.y, lTemp.pXAxis.z, lTemp.pXAxis.w);

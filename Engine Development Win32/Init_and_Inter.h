@@ -191,6 +191,9 @@ private:
 	Model gMageModel;
 	Model gTeddyModel;
 
+	// Mage constant buffer
+	cbAnimatedMesh gAnimated_Mesh_CB;
+
 	// Function For Scrubbing
 	void UpdateKeyframe(int pKeyframeIndex);
 	void TweeningAnimation(float pTime);

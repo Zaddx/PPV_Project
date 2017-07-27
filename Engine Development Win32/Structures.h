@@ -61,3 +61,10 @@ struct cbPerObject
 {
 	DirectX::XMMATRIX  WVP;
 };
+
+struct cbAnimatedMesh
+{
+	DirectX::XMFLOAT4 joints[27];
+	int				  index[5];
+	float			  weight[5];
+};
