@@ -621,7 +621,7 @@ void Init_and_Inter::DrawScene()
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 
 	// Draw the mage_joint_DebugRenderer Lines
-	//mage_joint_debugRenderer.RenderLines();
+	mage_joint_debugRenderer.RenderLines();
 
 	// Draw the mage_bone_debugRenderer Lines
 	mage_bone_debugRenderer.RenderLines();
