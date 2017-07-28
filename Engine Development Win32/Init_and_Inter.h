@@ -125,6 +125,7 @@ private:
 	ID3D11Texture2D* depthStencilBuffer;
 
 	ID3D11Buffer* cbPerObjectBuffer;
+	ID3D11Buffer* cbPerAnimationBuffer;
 
 	ID3D11RasterizerState* WireFrame; 
 

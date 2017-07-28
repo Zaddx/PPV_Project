@@ -103,6 +103,7 @@ void Init_and_Inter::ReleaseObjects()
 	depthStencilBuffer->Release();
 
 	cbPerObjectBuffer->Release();
+	cbPerAnimationBuffer->Release();
 
 	WireFrame->Release();
 
@@ -380,6 +381,32 @@ bool Init_and_Inter::InitScene(User_Input &_input)
 			arrayIndex++;
 		}
 	}
+
+	for (unsigned int i = 0; i < gMageSkeleton->pControlPoints.size(); i++)
+	{
+		float index[4];
+		float weight[4];
+
+		for (unsigned int j = 0; j < 4; j++)
+		{
+			index[j] = gMageSkeleton->pControlPoints[i]->pBlendingInfo[j].pBlendingIndex;
+			weight[j] = gMageSkeleton->pControlPoints[i]->pBlendingInfo[j].pBlendingWeight;
+		}
+
+		gAnimated_Mesh_CB.indices[i] = DirectX::XMFLOAT4(index[0], index[1], index[2], index[3]);
+		gAnimated_Mesh_CB.weights[i] = DirectX::XMFLOAT4(weight[0], weight[1], weight[2], weight[3]);
+	}
+
+	D3D11_BUFFER_DESC cbbd_Animation;
+	ZeroMemory(&cbbd_Animation, sizeof(D3D11_BUFFER_DESC));
+
+	cbbd_Animation.Usage = D3D11_USAGE_DEFAULT;
+	cbbd_Animation.ByteWidth = sizeof(cbAnimatedMesh);
+	cbbd_Animation.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbbd_Animation.CPUAccessFlags = 0;
+	cbbd_Animation.MiscFlags = 0;
+
+	hr = d3d11Device->CreateBuffer(&cbbd_Animation, NULL, &cbPerAnimationBuffer);
 
 	// Loop through the control points and add there indices
 #pragma endregion
@@ -690,6 +717,10 @@ void Init_and_Inter::DrawScene()
 	cbPerObj.WVP = XMMatrixTranspose(WVP);
 	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
+
+	// Update Subresource for the animation mesh
+	//d3d11DevCon->UpdateSubresource(cbPerAnimationBuffer, 0, NULL, &gAnimated_Mesh_CB, 0, 0);
+	//d3d11DevCon->VSSetConstantBuffers(1, 1, &cbPerAnimationBuffer);
 
 	//Draw the mage model mesh
 	d3d11DevCon->Draw(gMageSkeleton->pMesh.pVertices.size(), 0);
